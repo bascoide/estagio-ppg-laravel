@@ -12,6 +12,7 @@ class DatabaseSeeder extends Seeder
 
     /**
      * Seed the application's database.
+     * // seeder destualizado, usar o outro
      */
     public function run(): void
     {
