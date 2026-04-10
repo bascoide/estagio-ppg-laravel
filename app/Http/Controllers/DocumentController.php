@@ -6,6 +6,7 @@ use App\Models\Document;
 use App\Models\Field;
 use App\Models\FinalDocument;
 use App\Models\SubmittedPlan;
+use App\Models\TypeCourse;
 use Exception;
 use Illuminate\Http\Request;
 use ZipArchive;
@@ -245,6 +246,9 @@ class DocumentController extends Controller
 
             // Attach course types (pivot)
             foreach ($selectedCourseTypes as $typeId) {
+                if (!TypeCourse::find($typeId)) {
+                    throw new Exception('Tipo de curso com ID ' . $typeId . ' não encontrado!');
+                }
                 \DB::table('document_type_course')->insert([
                     'document_id'    => $documentId,
                     'type_course_id' => $typeId,
