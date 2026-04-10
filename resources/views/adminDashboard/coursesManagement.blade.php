@@ -8,9 +8,10 @@
     <h3 class="text-lg text-blue-800 mb-2">Adicionar curso</h3>
     <form method="POST" action="{{ route('add-course') }}" class="flex gap-4">
         @csrf
-        <input type="text" name="course_name" placeholder="Nome do curso"
+        <input type="text" name="course_name" placeholder="Nome do curso" required
             class="border-gray-300 border p-2 rounded w-1/2">
-        <select name="course_type" class="border-gray-300 border p-2 rounded">
+        <select name="course_type" required class="border-gray-300 border p-2 rounded">
+            <option value="">Selecione um tipo</option>
             @foreach($courseTypes as $courseType)
                 <option value="{{ $courseType['id'] }}">{{ $courseType['name'] }}</option>
             @endforeach

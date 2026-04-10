@@ -51,7 +51,7 @@ class CoursesController extends Controller
         $isActive     = $request->input('is_course_active') === '1';
 
         if (!$courseTypeId || !$courseName) {
-            return redirect('/courses');
+            return redirect('/courses')->with('error', 'Preencha todos os campos obrigatórios!');
         }
 
         try {
