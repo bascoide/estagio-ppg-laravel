@@ -227,8 +227,14 @@ class DocumentController extends Controller
             $file = $request->file('documentFile');
 
             // Validate MIME type
-            $allowedMime = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-            if ($file->getMimeType() !== $allowedMime) {
+            $allowedMimes = [
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'application/zip',
+                'application/octet-stream'
+            ];
+            
+
+            if (!in_array($file->getMimeType(), $allowedMimes)) {
                 throw new Exception('Apenas ficheiros .docx permitidos!');
             }
 

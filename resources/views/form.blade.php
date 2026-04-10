@@ -35,7 +35,7 @@
     @if(!empty($fields))
         <form method="POST" action="{{ route('print-document') }}" target="_blank">
             @csrf
-            <input type="hidden" name="document_id" value="{{ $selectedDocument ?? '' }}">
+            <input type="hidden" name="document_id" value="{{ $documentId ?? '' }}">
             <button type="submit" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center gap-2">
                 Visualizar Documento
                 <img class="h-8" src="{{ asset('images/document_view.webp') }}" alt="Visualizar">
@@ -55,7 +55,7 @@
         <h3 class="text-3xl mt-4 text-blue-900">Preencha o Plano</h3>
         @endif
 
-        <input type="hidden" name="document_id" value="{{ $selectedDocument ?? '' }}">
+        <input type="hidden" name="document_id" value="{{ $documentId ?? '' }}">
 
         @php $current_group = 0; @endphp
 
