@@ -36,8 +36,25 @@ class FormController extends Controller
             ->select('document.*')
             ->get()
             ->toArray();
+        $filledPlanId = (int) $request->input('filled_plan_id', 0);
+        
+        $finalDocument = null;
+        $fieldValues = [];
 
-        return view('form', compact('documents'));
+        if ($filledPlanId > 0) {
+        $finalDocument = FinalDocument::where('id', $filledPlanId)
+            ->where('user_id', $userId)
+            ->first();
+
+            if ($finalDocument) {
+                $fieldValues = FieldValue::where('final_document_id', $filledPlanId)
+                    ->get()
+                    ->keyBy('field_id')
+                    ->toArray();
+            }
+    }
+
+        return view('form', compact('documents', 'finalDocument', 'fieldValues', 'filledPlanId'));
     }
 
     public function generateForm(Request $request)

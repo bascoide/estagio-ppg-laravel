@@ -17,7 +17,7 @@
                 @if($document['is_active'] == 0)
                     @continue
                 @endif
-                @if(!isset($filledPlanId))
+                @if((int) request()->input('filled_plan_id', 0) == 0)
                     @if($document['type'] !== 'Plano')
                         @continue
                     @endif
@@ -26,7 +26,9 @@
                         @continue
                     @endif
                 @endif
-                <option value="{{ $document['id'] }}">{{ $document['name'] }}</option>
+
+                <option value="{{ $document['id'] }}">{{ $document['name'] }} {{ $document['type'] }}</option>
+
             @endforeach
         </select>
         <input type="submit" class="w-full mt-2 md:mt-0 md:w-auto bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 cursor-pointer" value="Selecionar">
