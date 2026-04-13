@@ -11,7 +11,7 @@
                 <select name="logged_name" class="border p-2 rounded">
                     <option value="">Todos</option>
                     @foreach($loggedNames as $logName)
-                        <option value="{{ $logName['name'] }}">{{ $logName['name'] }}</option>
+                        <option value="{{ $logName }}">{{ $logName }}</option>
                     @endforeach
                 </select>
             </div>
