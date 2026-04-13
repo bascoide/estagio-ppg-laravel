@@ -72,20 +72,128 @@ class EmailService
         }
     }
 
+    private function renderEmailTemplate(
+        string $eyebrow,
+        string $title,
+        string $contentHtml,
+        ?string $buttonLabel = null,
+        ?string $buttonUrl = null,
+        string $statusLabel = 'Informacao',
+        string $statusTone = 'blue'
+    ): string {
+        $tones = [
+            'blue' => [
+                'badgeColor' => '#1d4ed8',
+                'buttonBackground' => '#1e3a8a',
+            ],
+            'green' => [
+                'badgeColor' => '#15803d',
+                'buttonBackground' => '#1e3a8a',
+            ],
+            'red' => [
+                'badgeColor' => '#b91c1c',
+                'buttonBackground' => '#1e3a8a',
+            ],
+            'gray' => [
+                'badgeColor' => '#374151',
+                'buttonBackground' => '#1e3a8a',
+            ],
+        ];
+
+        $palette = $tones[$statusTone] ?? $tones['blue'];
+        $buttonHtml = '';
+
+        if ($buttonLabel && $buttonUrl) {
+            $buttonHtml = '
+                <tr>
+                    <td style="padding: 8px 32px 0 32px;">
+                        <a href="' . htmlspecialchars($buttonUrl) . '" style="display: inline-block; background-color: ' . $palette['buttonBackground'] . '; color: #ffffff; text-decoration: none; padding: 12px 22px; border-radius: 6px; font-weight: 600;">' . htmlspecialchars($buttonLabel) . '</a>
+                    </td>
+                </tr>';
+        }
+
+        return '
+            <!DOCTYPE html>
+            <html lang="pt">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>' . htmlspecialchars($title) . '</title>
+            </head>
+            <body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: Arial, Helvetica, sans-serif; color: #1f2937;">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f3f4f6; padding: 32px 16px;">
+                    <tr>
+                        <td align="center">
+                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 640px; background-color: #ffffff; border: 1px solid #e5e7eb;">
+                                <tr>
+                                    <td style="background-color: #e5e7eb; padding: 18px 32px; border-bottom: 1px solid #d1d5db;">
+                                        <div style="font-size: 20px; font-weight: 700; color: #111827;">PPG</div>
+                                        <div style="margin-top: 4px; font-size: 13px; color: #4b5563;">' . htmlspecialchars($eyebrow) . ' | ISCAP</div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 32px 32px 8px 32px;">
+                                        <div style="font-size: 12px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: ' . $palette['badgeColor'] . ';">' . htmlspecialchars($statusLabel) . '</div>
+                                        <h1 style="margin: 10px 0 12px 0; font-size: 28px; line-height: 1.2; color: #111827;">' . htmlspecialchars($title) . '</h1>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 0 32px; font-size: 15px; line-height: 1.7; color: #374151;">
+                                        ' . $contentHtml . '
+                                    </td>
+                                </tr>
+                                ' . $buttonHtml . '
+                                <tr>
+                                    <td style="padding: 24px 32px 32px 32px; font-size: 14px; line-height: 1.7; color: #4b5563;">
+                                        <p style="margin: 0;">Saudacoes academicas,</p>
+                                        <p style="margin: 4px 0 0 0;"><strong>Equipa de Atendimento</strong><br>ISCAP</p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="background-color: #f3f4f6; border-top: 1px solid #e5e7eb; padding: 16px 32px; font-size: 12px; color: #6b7280; text-align: center;">
+                                        PPG © 2025 - ISCAP. Todos os direitos reservados.
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </body>
+            </html>';
+    }
+
+    private function renderRejectedFields(array $rejectedFields): string
+    {
+        if (empty($rejectedFields)) {
+            return '';
+        }
+
+        $items = '';
+        foreach ($rejectedFields as $name => $value) {
+            $items .= '<li style="margin-bottom: 6px;"><strong>' . htmlspecialchars($name) . ':</strong> ' . htmlspecialchars($value) . '</li>';
+        }
+
+        return '
+            <div style="margin: 16px 0; padding: 16px; background-color: #f9fafb; border: 1px solid #e5e7eb;">
+                <p style="margin: 0 0 10px 0;"><strong>Campos rejeitados:</strong></p>
+                <ul style="margin: 0; padding-left: 20px;">' . $items . '</ul>
+            </div>';
+    }
+
     public function sendConfirmationCode(string $userEmail, string $verificationCode): bool
     {
         $fullUrl = url('/user-verification') . '?email=' . urlencode($userEmail) . '&verification_code=' . urlencode($verificationCode);
 
-        $html = "
-            <html><head><meta charset='UTF-8'><title>Verificação de Conta</title></head>
-            <body>
-                <h2>Verifique a sua conta!</h2>
-                <p>Para concluir a verificação da sua conta, clique no link abaixo:</p>
-                <p><a href='" . htmlspecialchars($fullUrl) . "'>Clique aqui para verificar</a></p>
-                <p>Se não solicitou este cadastro, desconsidere esta mensagem.</p>
-                <br><p>Saudações académicas,</p><p><strong>Equipa de Atendimento</strong><br>ISCAP</p>
-            </body></html>
-        ";
+        $html = $this->renderEmailTemplate(
+            'Portal de Estagios',
+            'Verificacao da sua conta',
+            '<p style="margin: 0 0 14px 0;">Para concluir o registo, confirme a sua conta atraves do link abaixo.</p>
+             <p style="margin: 0;">Se nao solicitou este registo, pode ignorar esta mensagem.</p>',
+            'Confirmar conta',
+            $fullUrl,
+            'Verificacao',
+            'blue'
+        );
 
         return $this->send($userEmail, 'Verificação da sua Conta', $html, true, [], $this->config['from_email']);
     }
@@ -100,17 +208,17 @@ class EmailService
 
         $fullUrl = url('/user-upload-final-document-form') . '?final_document_id=' . $finalDocumentId;
 
-        $html = "
-            <html><head><meta charset='UTF-8'><title>Protocolo Aprovado</title></head>
-            <body>
-                <h2>Protocolo Aprovado</h2>
-                <p>O protocolo foi <strong>aprovado</strong> e processado com sucesso.</p>
-                <p>Por favor, solicite as assinaturas necessárias para a finalização do mesmo.</p>
-                <p>O documento encontra-se em anexo a este e-mail.</p>
-                <p>Submeta o seu documento para assinatura: <a href='" . htmlspecialchars($fullUrl) . "'>Clique aqui</a></p>
-                <br><p>Saudações académicas,</p><p><strong>Equipa de Atendimento</strong><br>ISCAP</p>
-            </body></html>
-        ";
+        $html = $this->renderEmailTemplate(
+            'Gestao de Protocolos',
+            'Protocolo aprovado',
+            '<p style="margin: 0 0 14px 0;">O seu protocolo foi <strong>aprovado</strong> e processado com sucesso.</p>
+             <p style="margin: 0 0 14px 0;">Solicite agora as assinaturas necessarias para a finalizacao do documento.</p>
+             <p style="margin: 0;">O ficheiro segue em anexo para referencia.</p>',
+            'Submeter documento assinado',
+            $fullUrl,
+            'Aprovado',
+            'green'
+        );
 
         return $this->send($userEmail, 'O Seu Protocolo foi Aprovado', $html, true, [$pdfPath], $this->config['from_email']);
     }
@@ -123,26 +231,22 @@ class EmailService
         $pdfPath = public_path('uploads/generated_docs/' . $document->pdf_path);
         if (!file_exists($pdfPath)) return false;
 
-        $fieldsHtml = '';
-        if (!empty($rejectedFields)) {
-            $fieldsHtml = '<p><strong>Campos rejeitados:</strong></p><ul>';
-            foreach ($rejectedFields as $name => $value) {
-                $fieldsHtml .= '<li>' . htmlspecialchars($name) . ': ' . htmlspecialchars($value) . '</li>';
-            }
-            $fieldsHtml .= '</ul>';
-        }
+        $reasonHtml = !empty($rejectionReason)
+            ? '<p style="margin: 0 0 14px 0;"><strong>Motivo:</strong> ' . htmlspecialchars($rejectionReason) . '</p>'
+            : '';
 
-        $html = "
-            <html><head><meta charset='UTF-8'><title>Protocolo Rejeitado</title></head>
-            <body>
-                <h2>Protocolo Rejeitado</h2>
-                <p>O seu protocolo foi <strong>rejeitado</strong>.</p>
-                " . (!empty($rejectionReason) ? "<p><strong>Motivo:</strong> " . htmlspecialchars($rejectionReason) . "</p>" : "") . "
-                $fieldsHtml
-                <p>O documento está anexado para sua referência.</p>
-                <br><p>Saudações académicas,</p><p><strong>Equipa de Atendimento</strong><br>ISCAP</p>
-            </body></html>
-        ";
+        $html = $this->renderEmailTemplate(
+            'Gestao de Protocolos',
+            'Protocolo rejeitado',
+            '<p style="margin: 0 0 14px 0;">O seu protocolo foi <strong>rejeitado</strong>.</p>' .
+            $reasonHtml .
+            $this->renderRejectedFields($rejectedFields) .
+            '<p style="margin: 14px 0 0 0;">O documento segue em anexo para sua referencia.</p>',
+            null,
+            null,
+            'Rejeitado',
+            'red'
+        );
 
         return $this->send($userEmail, 'O Seu Protocolo foi Rejeitado', $html, true, [$pdfPath], $this->config['from_email']);
     }
@@ -155,16 +259,17 @@ class EmailService
         $pdfPath = public_path('uploads/generated_docs/' . $document->pdf_path);
         if (!file_exists($pdfPath)) return false;
 
-        $html = "
-            <html><head><meta charset='UTF-8'><title>Protocolo Invalidado</title></head>
-            <body>
-                <h2>Protocolo Invalidado</h2>
-                <p>O seu protocolo foi <strong>rejeitado</strong>.</p>
-                " . (!empty($rejectionReason) ? "<p><strong>Motivo:</strong> " . htmlspecialchars($rejectionReason) . "</p>" : "") . "
-                <p>Por favor, consulte o e-mail enviado anteriormente.</p>
-                <br><p>Saudações académicas,</p><p><strong>Equipa de Atendimento</strong><br>ISCAP</p>
-            </body></html>
-        ";
+        $html = $this->renderEmailTemplate(
+            'Gestao de Protocolos',
+            'Protocolo invalidado',
+            '<p style="margin: 0 0 14px 0;">O seu protocolo foi <strong>invalidado</strong>.</p>' .
+            (!empty($rejectionReason) ? '<p style="margin: 0 0 14px 0;"><strong>Motivo:</strong> ' . htmlspecialchars($rejectionReason) . '</p>' : '') .
+            '<p style="margin: 0;">Consulte o email enviado anteriormente para rever o processo.</p>',
+            null,
+            null,
+            'Invalidado',
+            'red'
+        );
 
         return $this->send($userEmail, 'O Seu Protocolo foi Invalidado', $html, true, [$pdfPath], $this->config['from_email']);
     }
@@ -181,17 +286,17 @@ class EmailService
         $uuid = $presidentDoc ? $presidentDoc->uuid : '';
         $fullUrl = url('/president-upload-final-document-form') . '?uuid=' . $uuid;
 
-        $html = "
-            <html><head><meta charset='UTF-8'><title>Protocolo em Espera</title></head>
-            <body>
-                <h2>Deve por favor assinar este protocolo</h2>
-                <p>Em anexo encontra um protocolo, para por favor, assinar.</p>
-                <p>Submeta-o assinado através do seguinte link:</p>
-                <p><a href='" . htmlspecialchars($fullUrl) . "'>Clique aqui</a></p>
-                <br><p>Saudações académicas,</p><p><strong>Equipa de Atendimento</strong><br>ISCAP</p>
-                <p>" . htmlspecialchars($adminName) . "</p>
-            </body></html>
-        ";
+        $html = $this->renderEmailTemplate(
+            'Validacao Presidencial',
+            'Assinatura pendente do protocolo',
+            '<p style="margin: 0 0 14px 0;">Em anexo encontra o protocolo para assinatura.</p>
+             <p style="margin: 0 0 14px 0;">Depois de assinar, submeta o documento final atraves do botao abaixo.</p>
+             <p style="margin: 0;"><strong>Responsavel pelo envio:</strong> ' . htmlspecialchars($adminName) . '</p>',
+            'Submeter protocolo assinado',
+            $fullUrl,
+            'Pendente',
+            'blue'
+        );
 
         return $this->send($presidentEmail, 'O Protocolo está à espera da sua assinatura', $html, true, [$pdfPath], $this->config['from_email']);
     }
@@ -204,15 +309,16 @@ class EmailService
         $pdfPath = public_path('uploads/generated_docs/' . $document->pdf_path);
         if (!file_exists($pdfPath)) return false;
 
-        $html = "
-            <html><head><meta charset='UTF-8'><title>Protocolo Validado</title></head>
-            <body>
-                <h2>Protocolo Validado</h2>
-                <p>O seu protocolo foi <strong>aprovado</strong> e finalizado com sucesso.</p>
-                <p>Poderá encontrar o documento finalizado em anexo a este e-mail.</p>
-                <br><p>Saudações académicas,</p><p><strong>Equipa de Atendimento</strong><br>ISCAP</p>
-            </body></html>
-        ";
+        $html = $this->renderEmailTemplate(
+            'Gestao de Protocolos',
+            'Protocolo validado',
+            '<p style="margin: 0 0 14px 0;">O seu protocolo foi <strong>aprovado</strong> e finalizado com sucesso.</p>
+             <p style="margin: 0;">O documento final segue em anexo para consulta.</p>',
+            null,
+            null,
+            'Validado',
+            'green'
+        );
 
         return $this->send($userEmail, 'O Seu Protocolo foi Validado', $html, true, [$pdfPath], $this->config['from_email']);
     }
@@ -225,15 +331,16 @@ class EmailService
         $pdfPath = public_path('uploads/generated_docs/' . $document->pdf_path);
         if (!file_exists($pdfPath)) return false;
 
-        $html = "
-            <html><head><meta charset='UTF-8'><title>Protocolo Anulado</title></head>
-            <body>
-                <h2>Protocolo Anulado</h2>
-                <p>O seu protocolo foi <strong>anulado</strong>.</p>
-                <p>Esta decisão foi realizada a seu pedido.</p>
-                <br><p>Saudações académicas,</p><p><strong>Equipa de Atendimento</strong><br>ISCAP</p>
-            </body></html>
-        ";
+        $html = $this->renderEmailTemplate(
+            'Gestao de Protocolos',
+            'Protocolo anulado',
+            '<p style="margin: 0 0 14px 0;">O seu protocolo foi <strong>anulado</strong>.</p>
+             <p style="margin: 0;">Esta acao foi registada conforme solicitado.</p>',
+            null,
+            null,
+            'Anulado',
+            'gray'
+        );
 
         return $this->send($userEmail, 'O Seu Protocolo foi anulado', $html, true, [$pdfPath], $this->config['from_email']);
     }
@@ -248,17 +355,17 @@ class EmailService
 
         $fullUrl = url('/form') . '?filled_plan_id=' . $finalDocumentId;
 
-        $html = "
-            <html><head><meta charset='UTF-8'><title>Plano Pendente</title></head>
-            <body>
-                <h2>Plano Pendente</h2>
-                <p>O plano está <strong>pendente</strong>.</p>
-                <p>Por favor, solicite as assinaturas necessárias para a finalização do mesmo.</p>
-                <p>O documento encontra-se em anexo a este e-mail.</p>
-                <p>Submeta o seu documento: <a href='" . htmlspecialchars($fullUrl) . "'>Clique aqui</a></p>
-                <br><p>Saudações académicas,</p><p><strong>Equipa de Atendimento</strong><br>ISCAP</p>
-            </body></html>
-        ";
+        $html = $this->renderEmailTemplate(
+            'Gestao de Planos',
+            'Plano pendente',
+            '<p style="margin: 0 0 14px 0;">O seu plano encontra-se <strong>pendente</strong>.</p>
+             <p style="margin: 0 0 14px 0;">Solicite as assinaturas necessarias para finalizar o documento.</p>
+             <p style="margin: 0;">O ficheiro segue em anexo para referencia.</p>',
+            'Submeter plano assinado',
+            $fullUrl,
+            'Pendente',
+            'blue'
+        );
 
         return $this->send($userEmail, 'O Seu Plano está Pendente', $html, true, [$pdfPath], $this->config['from_email']);
     }

@@ -248,6 +248,26 @@ class AdminPanelController extends Controller
         $civilYears  = array_unique($civilYears);
         $schoolYears = array_unique($schoolYears);
 
+        // Fallback para quando ainda não existem protocolos validados.
+        if (empty($civilYears) || empty($schoolYears)) {
+            $currentYear = (int) date('Y');
+            if ((int) date('n') >= 8) {
+                $schoolYearStart = $currentYear;
+                $schoolYearEnd   = $currentYear + 1;
+            } else {
+                $schoolYearStart = $currentYear - 1;
+                $schoolYearEnd   = $currentYear;
+            }
+
+            if (empty($civilYears)) {
+                $civilYears = [(string) $currentYear];
+            }
+
+            if (empty($schoolYears)) {
+                $schoolYears = ["$schoolYearStart/$schoolYearEnd"];
+            }
+        }
+
         $courses      = Course::with('typeCourse')->get()->toArray();
         $totalRecords = FinalDocument::where('status', 'Validado')->whereNotNull('plan_id')
             ->whereBetween('created_at', [$startDate, $endDate])->count();

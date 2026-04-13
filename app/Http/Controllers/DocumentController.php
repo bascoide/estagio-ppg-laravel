@@ -32,10 +32,22 @@ class DocumentController extends Controller
             abort(404, 'Documento não encontrado');
         }
 
-        return response()->file($filePath, [
-            'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'inline; filename="' . basename($filePath) . '"',
-        ]);
+        $extension = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+
+        if ($extension === 'pdf') {
+            return response()->file($filePath, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="' . basename($filePath) . '"',
+            ]);
+        }
+
+        if ($extension === 'docx') {
+            return response()->download($filePath, basename($filePath), [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            ]);
+        }
+
+        abort(415, 'Formato de ficheiro não suportado');
     }
 
     public function printDocumentForm(Request $request)

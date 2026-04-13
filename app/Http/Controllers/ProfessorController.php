@@ -79,6 +79,15 @@ class ProfessorController extends Controller
 
             $schoolYears = array_unique($schoolYears);
 
+            if (empty($schoolYears)) {
+                $currentYear = (int) date('Y');
+                if ((int) date('n') >= 8) {
+                    $schoolYears = ["$currentYear/" . ($currentYear + 1)];
+                } else {
+                    $schoolYears = [($currentYear - 1) . "/$currentYear"];
+                }
+            }
+
             return view('adminDashboard.createProfessorDocument', compact('professor', 'courses', 'schoolYears'));
         } catch (Exception $e) {
             session()->flash('error', $e->getMessage());
