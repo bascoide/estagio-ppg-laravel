@@ -216,17 +216,26 @@ class FormController extends Controller
     {
         $outputDir = dirname($docxPath);
         $pdfPath   = preg_replace('/\.docx$/', '.pdf', $docxPath);
+        $sofficeBinary = $this->resolveSofficeBinary();
+
+        if ($sofficeBinary === null) {
+            throw new Exception('LibreOffice não foi encontrado. Configure o comando soffice no PATH ou instale o LibreOffice.');
+        }
 
         $command = sprintf(
-            'soffice --headless --convert-to pdf --outdir %s %s',
+            '%s --headless --convert-to pdf --outdir %s %s',
+            escapeshellarg($sofficeBinary),
             escapeshellarg($outputDir),
             escapeshellarg($docxPath)
         );
 
+        $output = [];
+        $returnCode = 0;
         exec($command, $output, $returnCode);
 
         if ($returnCode !== 0 || !file_exists($pdfPath)) {
-            throw new Exception('Falha ao converter documento para PDF');
+            $details = trim(implode(PHP_EOL, $output));
+            throw new Exception('Falha ao converter documento para PDF' . ($details !== '' ? ': ' . $details : ''));
         }
 
         if (file_exists($docxPath)) {
@@ -234,6 +243,33 @@ class FormController extends Controller
         }
 
         return basename($pdfPath);
+    }
+
+    private function resolveSofficeBinary(): ?string
+    {
+        $candidates = [
+            'soffice',
+            'C:\\Program Files\\LibreOffice\\program\\soffice.exe',
+            'C:\\Program Files (x86)\\LibreOffice\\program\\soffice.exe',
+            'C:\\Program Files\\OpenOffice 4\\program\\soffice.exe',
+            'C:\\Program Files (x86)\\OpenOffice 4\\program\\soffice.exe',
+        ];
+
+        foreach ($candidates as $candidate) {
+            if ($candidate === 'soffice') {
+                @exec('where soffice', $output, $returnCode);
+                if ($returnCode === 0 && !empty($output[0])) {
+                    return trim($output[0]);
+                }
+                continue;
+            }
+
+            if (is_file($candidate)) {
+                return $candidate;
+            }
+        }
+
+        return null;
     }
 
     private function replacePlaceholders(string $templateDocument, string $outputPath, array $submittedValues): bool

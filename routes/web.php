@@ -59,7 +59,7 @@ Route::middleware(['admin'])->group(function () {
     Route::post('/president-final-document',            [DocumentValidationController::class, 'presidentFinalDocument'])->name('president-final-document');
     Route::post('/validate-document',                   [DocumentValidationController::class, 'validateDocument'])->name('validate-document');
     Route::post('/invalidate-document',                 [DocumentValidationController::class, 'invalidateDocument'])->name('invalidate-document');
-    Route::get('/president-list',                       [DocumentValidationController::class, 'listPresidents'])->name('president-list');
+    Route::match(['GET', 'POST'], '/president-list',    [DocumentValidationController::class, 'listPresidents'])->name('president-list');
     Route::post('/delete-president-email',              [DocumentValidationController::class, 'deletePresidentEmail'])->name('delete-president-email');
 
     Route::get('/view-final-document',  [AdminPanelController::class, 'viewFinalDocument'])->name('view-final-document');
