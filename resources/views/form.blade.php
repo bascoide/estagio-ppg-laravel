@@ -6,10 +6,10 @@
 
     <form action="{{ route('get-form') }}" method="GET" class="md:flex items-center gap-x-4">
 
-        @if(isset($filledPlanId) && $filledPlanId)
-        <input type="hidden" name="filled_plan_id" value="{{ $filledPlanId }}">
+        @if((int) request()->input('filled_plan_id', 0) != 0)
+        <input type="hidden" name="filled_plan_id" value="{{ (int) request()->input('filled_plan_id', 0)  }}">
         @endif
-
+        
         <label for="document" class="whitespace-nowrap">Documento:</label>
         <select name="document" id="document" class="mt-2 md:mt-0 w-full flex-grow p-2 border rounded-lg" required>
             <option value="">Selecione um documento</option>
@@ -47,7 +47,7 @@
         <form action="{{ route('submit-form') }}" method="POST" id="main-form" enctype="multipart/form-data">
         @csrf
 
-        @if(isset($filledPlanId) && $filledPlanId)
+        @if((int) request()->input('filled_plan_id', 0) > 0)
         <h3 class="text-3xl mt-4 text-blue-900">Preencha o Protocolo</h3>
         <label for="planFile">Faça upload do plano assinado: </label>
         <input type="file" name="planFile"

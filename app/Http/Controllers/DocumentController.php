@@ -20,18 +20,19 @@ class DocumentController extends Controller
         if (!$documentId) {
             abort(400, 'ID do documento não fornecido');
         }
+        
 
         $document = \DB::table('final_document')->where('id', $documentId)->first();
 
         if (!$document) {
             abort(404, 'Documento não encontrado');
         }
-
+        
         $filePath = public_path('uploads/generated_docs/' . $document->pdf_path);
         if (!file_exists($filePath)) {
             abort(404, 'Documento não encontrado');
         }
-
+        
         $extension = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
 
         if ($extension === 'pdf') {
@@ -40,14 +41,15 @@ class DocumentController extends Controller
                 'Content-Disposition' => 'inline; filename="' . basename($filePath) . '"',
             ]);
         }
-
+        
         if ($extension === 'docx') {
             return response()->download($filePath, basename($filePath), [
                 'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
             ]);
         }
-
+        
         abort(415, 'Formato de ficheiro não suportado');
+        
     }
 
     public function printDocumentForm(Request $request)

@@ -11,6 +11,7 @@ function verifyPlan(finalDocumentId, planId, planPath, formElement) {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
         },
         body: new URLSearchParams({
             'final_document_id': finalDocumentId,
@@ -18,10 +19,15 @@ function verifyPlan(finalDocumentId, planId, planPath, formElement) {
             'plan_path': planPath
         })
     })
-        .then(response => {
-            if (!response.ok) throw new Error('Network response was not ok');
-            return response.blob();
-        })
+        .then( async response => {
+
+            if (!response.ok) {
+            let errorText = await response.text();
+            throw new Error(errorText || 'Erro no servidor');
+        }
+        return response.blob();
+    })
+        
         .then(blob => {
             // Criar objeto URL e redirecionar a nova aba para ele
             const pdfUrl = URL.createObjectURL(blob);

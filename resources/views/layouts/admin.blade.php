@@ -6,6 +6,7 @@
     <link href="{{ asset('output.css') }}" rel="stylesheet">
     <title>PPG - Admin</title>
     <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 </head>
 <body class="">
     <div class="flex p-5 bg-gray-200">

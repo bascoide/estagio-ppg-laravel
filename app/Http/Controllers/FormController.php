@@ -38,6 +38,7 @@ class FormController extends Controller
             ->toArray();
         $filledPlanId = (int) $request->input('filled_plan_id', 0);
         
+        
         $finalDocument = null;
         $fieldValues = [];
 
@@ -59,6 +60,8 @@ class FormController extends Controller
 
     public function generateForm(Request $request)
     {
+        
+        
         $userId = session('user_id');
         $userCourse = Course::join('user', 'user.course_id', '=', 'course.id')
             ->where('user.id', $userId)
