@@ -42,7 +42,7 @@ Route::middleware(['admin'])->group(function () {
     Route::get('/need-validation-documents', [AdminPanelController::class, 'viewNeedValidationDocuments'])->name('need-validation-documents');
     Route::get('/view-validation-documents', [AdminPanelController::class, 'viewValidationDocuments'])->name('view-validation-documents');
 
-    Route::get('/create-admin',  [AdminPanelController::class, 'createAdmin'])->name('create-admin');
+    Route::match(['GET', 'POST'], '/create-admin', [AdminPanelController::class, 'createAdmin'])->name('create-admin');
     Route::get('/show-users',    [AdminPanelController::class, 'showUsers'])->name('show-users');
     Route::get('/show-documents', [AdminPanelController::class, 'showDocuments'])->name('show-documents');
     Route::get('/user-documents', [AdminPanelController::class, 'viewUserDocuments'])->name('user-documents');
