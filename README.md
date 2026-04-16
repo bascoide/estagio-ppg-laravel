@@ -1,59 +1,224 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# PPG • Gestão de Protocolos de Estágio
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Aplicação web desenvolvida em Laravel para apoiar a gestão de protocolos, documentos de estágio e validações administrativas no contexto académico do ISCAP/PPG.
 
-## About Laravel
+O sistema permite que alunos se registem, preencham formulários dinâmicos, gerem documentos em PDF ou DOCX, submetam versões finais assinadas e acompanhem o processo de validação. A área administrativa inclui gestão de cursos, utilizadores, documentos, relatórios e registos de atividade.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Principais funcionalidades
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### Área do utilizador
+- Registo e autenticação
+- Verificação de conta por email
+- Seleção de documentos por curso e tipo de curso
+- Preenchimento dinâmico de formulários
+- Geração e download de documentos em PDF e DOCX
+- Upload do documento final assinado em formato PDF
 
-## Learning Laravel
+### Área administrativa
+- Gestão de administradores, utilizadores e cursos
+- Upload, ativação e desativação de modelos de documentos
+- Aceitação, rejeição e validação de protocolos
+- Gestão de emails presidenciais para validação
+- Visualização de documentos pendentes e validados
+- Geração de relatórios por professor
+- Exportação de informação para Excel
+- Consulta de logs de atividade
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+---
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Tecnologias utilizadas
 
-## Laravel Sponsors
+- PHP 8.2+
+- Laravel 12
+- Blade Templates
+- MySQL / MariaDB ou SQLite
+- PHPMailer
+- Dompdf
+- PhpWord
+- PhpSpreadsheet
+- Tailwind/CSS estático para interface
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+---
 
-### Premium Partners
+## Requisitos
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+Antes de iniciar, garante que tens instalado:
 
-## Contributing
+- PHP 8.2 ou superior
+- Composer
+- Servidor web local, como XAMPP
+- MySQL/MariaDB ou SQLite
+- Extensões PHP normalmente usadas pelo Laravel, como OpenSSL, Mbstring, PDO e Fileinfo
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+> Nota: o projeto pode funcionar com a folha de estilos já gerada, pelo que o Node.js não é obrigatório para a execução básica.
 
-## Code of Conduct
+---
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## Instalação
 
-## Security Vulnerabilities
+### 1. Clonar o projeto
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```bash
+git clone <url-do-repositorio>
+cd estagio-ppg-laravel
+```
 
-## License
+### 2. Instalar dependências PHP
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```bash
+composer install
+```
+
+### 3. Criar o ficheiro de ambiente
+
+```bash
+copy .env.example .env
+```
+
+Se estiveres a usar PowerShell:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+### 4. Configurar a aplicação
+
+Gerar a chave da aplicação:
+
+```bash
+php artisan key:generate
+```
+
+Configurar a base de dados no ficheiro .env.
+
+#### Exemplo com MySQL / XAMPP
+
+```env
+APP_NAME=PPG
+APP_URL=http://127.0.0.1:8000
+
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=estagio_ppg
+DB_USERNAME=root
+DB_PASSWORD=
+```
+
+> O ficheiro .env.example vem com SQLite por omissão. Se estiveres em XAMPP, atualiza estas variáveis antes das migrações.
+
+### 5. Executar migrações
+
+```bash
+php artisan migrate
+```
+
+### 6. Criar um administrador local para testes
+
+```bash
+php artisan db:seed --class=AdminSeeder
+```
+
+> Recomendado apenas em ambiente de desenvolvimento.
+
+### 7. Iniciar o servidor
+
+```bash
+php artisan serve
+```
+
+Depois abre no navegador:
+
+```text
+http://127.0.0.1:8000
+```
+
+---
+
+## Configuração de email
+
+O sistema envia notificações de verificação, aprovação, rejeição e validação. Para isso, configura um servidor SMTP no ficheiro .env.
+
+Exemplo:
+
+```env
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.exemplo.com
+MAIL_PORT=587
+MAIL_USERNAME=utilizador
+MAIL_PASSWORD=palavra-passe
+MAIL_SCHEME=tls
+MAIL_FROM_ADDRESS=no-reply@exemplo.com
+MAIL_FROM_NAME="PPG"
+```
+
+Se não configurares SMTP, algumas funcionalidades de email podem não funcionar corretamente.
+
+---
+
+## Fluxo principal do sistema
+
+1. O utilizador cria conta e confirma o email.
+2. Seleciona o tipo de documento aplicável ao seu curso.
+3. Preenche os campos dinâmicos do formulário.
+4. O sistema gera o protocolo e permite exportação em PDF ou DOCX.
+5. A administração revê o documento e decide se aceita, rejeita ou valida.
+6. Após aprovação, o utilizador submete a versão final assinada.
+7. O sistema mantém histórico e logs das ações relevantes.
+
+---
+
+## Estrutura resumida do projeto
+
+```text
+app/
+ ├─ Http/Controllers/   # Lógica da aplicação
+ ├─ Models/             # Modelos Eloquent
+ └─ Services/           # Serviços auxiliares, como envio de email
+
+routes/
+ └─ web.php             # Rotas principais da aplicação
+
+resources/views/        # Interfaces Blade
+
+database/
+ ├─ migrations/         # Estrutura da base de dados
+ └─ seeders/            # Seeders para ambiente local
+```
+
+---
+
+## Comandos úteis
+
+```bash
+composer dev
+composer test
+php artisan migrate:fresh
+php artisan config:clear
+php artisan route:list
+```
+
+---
+
+## Observações
+
+- O projeto foi estruturado para uso académico e administrativo.
+- Algumas funcionalidades dependem de envio de email e de ficheiros PDF válidos.
+- Para ambiente Windows, a utilização com XAMPP é adequada e compatível com MySQL/MariaDB.
+
+---
+
+## Melhorias futuras sugeridas
+
+- Adicionar testes automáticos para fluxos críticos
+- Melhorar paginação e filtros na área administrativa
+- Integrar armazenamento externo para documentos
+- Reforçar auditoria e permissões por perfil
+
+---
+
+## Licença
+
+Projeto para contexto académico/institucional. Ajusta a licença conforme as regras da organização ou da equipa responsável.
