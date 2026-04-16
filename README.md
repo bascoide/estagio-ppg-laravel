@@ -1,99 +1,99 @@
-# PPG • Gestão de Protocolos de Estágio
+# PPG • Internship Protocol Management
 
-Aplicação web desenvolvida em Laravel para apoiar a gestão de protocolos, documentos de estágio e validações administrativas no contexto académico do ISCAP/PPG.
+A Laravel-based web application designed to support the management of internship protocols, academic documents, and administrative validation workflows in the ISCAP/PPG context.
 
-O sistema permite que alunos se registem, preencham formulários dinâmicos, gerem documentos em PDF ou DOCX, submetam versões finais assinadas e acompanhem o processo de validação. A área administrativa inclui gestão de cursos, utilizadores, documentos, relatórios e registos de atividade.
-
----
-
-## Principais funcionalidades
-
-### Área do utilizador
-- Registo e autenticação
-- Verificação de conta por email
-- Seleção de documentos por curso e tipo de curso
-- Preenchimento dinâmico de formulários
-- Geração e download de documentos em PDF e DOCX
-- Upload do documento final assinado em formato PDF
-
-### Área administrativa
-- Gestão de administradores, utilizadores e cursos
-- Upload, ativação e desativação de modelos de documentos
-- Aceitação, rejeição e validação de protocolos
-- Gestão de emails presidenciais para validação
-- Visualização de documentos pendentes e validados
-- Geração de relatórios por professor
-- Exportação de informação para Excel
-- Consulta de logs de atividade
+The system allows students to register, complete dynamic forms, generate PDF or DOCX documents, upload signed final versions, and follow the validation process. The administrative area includes management of courses, users, documents, reports, and activity logs.
 
 ---
 
-## Tecnologias utilizadas
+## Main features
+
+### User area
+- Registration and authentication
+- Account verification by email
+- Document selection by course and course type
+- Dynamic form filling
+- PDF and DOCX document generation and download
+- Upload of the final signed PDF document
+
+### Administrative area
+- Management of administrators, users, and courses
+- Upload, activation, and deactivation of document templates
+- Acceptance, rejection, and validation of protocols
+- Management of presidential email addresses for validation
+- Viewing pending and validated documents
+- Report generation by professor
+- Excel data export
+- Activity log tracking
+
+---
+
+## Technologies used
 
 - PHP 8.2+
 - Laravel 12
-- Blade Templates
-- MySQL / MariaDB ou SQLite
+- Blade templates
+- MySQL / MariaDB or SQLite
 - PHPMailer
 - Dompdf
 - PhpWord
 - PhpSpreadsheet
-- Tailwind/CSS estático para interface
+- Tailwind/static CSS for the interface
 
 ---
 
-## Requisitos
+## Requirements
 
-Antes de iniciar, garante que tens instalado:
+Before starting, make sure you have the following installed:
 
-- PHP 8.2 ou superior
+- PHP 8.2 or higher
 - Composer
-- Servidor web local, como XAMPP
-- MySQL/MariaDB ou SQLite
-- Extensões PHP normalmente usadas pelo Laravel, como OpenSSL, Mbstring, PDO e Fileinfo
+- A local web server such as XAMPP
+- MySQL/MariaDB or SQLite
+- Common Laravel PHP extensions such as OpenSSL, Mbstring, PDO, and Fileinfo
 
-> Nota: o projeto pode funcionar com a folha de estilos já gerada, pelo que o Node.js não é obrigatório para a execução básica.
+> Note: the project can run with the already generated stylesheet, so Node.js is not required for basic execution.
 
 ---
 
-## Instalação
+## Installation
 
-### 1. Clonar o projeto
+### 1. Clone the project
 
 ```bash
-git clone <url-do-repositorio>
+git clone <repository-url>
 cd estagio-ppg-laravel
 ```
 
-### 2. Instalar dependências PHP
+### 2. Install PHP dependencies
 
 ```bash
 composer install
 ```
 
-### 3. Criar o ficheiro de ambiente
+### 3. Create the environment file
 
 ```bash
 copy .env.example .env
 ```
 
-Se estiveres a usar PowerShell:
+If you are using PowerShell:
 
 ```powershell
 Copy-Item .env.example .env
 ```
 
-### 4. Configurar a aplicação
+### 4. Configure the application
 
-Gerar a chave da aplicação:
+Generate the application key:
 
 ```bash
 php artisan key:generate
 ```
 
-Configurar a base de dados no ficheiro .env.
+Then configure the database in the .env file.
 
-#### Exemplo com MySQL / XAMPP
+#### Example using MySQL / XAMPP
 
 ```env
 APP_NAME=PPG
@@ -107,29 +107,29 @@ DB_USERNAME=root
 DB_PASSWORD=
 ```
 
-> O ficheiro .env.example vem com SQLite por omissão. Se estiveres em XAMPP, atualiza estas variáveis antes das migrações.
+> The default .env.example file uses SQLite. If you are working with XAMPP, update these variables before running the migrations.
 
-### 5. Executar migrações
+### 5. Run migrations
 
 ```bash
 php artisan migrate
 ```
 
-### 6. Criar um administrador local para testes
+### 6. Create a local admin for testing
 
 ```bash
 php artisan db:seed --class=AdminSeeder
 ```
 
-> Recomendado apenas em ambiente de desenvolvimento.
+> Recommended for development environments only.
 
-### 7. Iniciar o servidor
+### 7. Start the server
 
 ```bash
 php artisan serve
 ```
 
-Depois abre no navegador:
+Then open in your browser:
 
 ```text
 http://127.0.0.1:8000
@@ -137,60 +137,60 @@ http://127.0.0.1:8000
 
 ---
 
-## Configuração de email
+## Email configuration
 
-O sistema envia notificações de verificação, aprovação, rejeição e validação. Para isso, configura um servidor SMTP no ficheiro .env.
+The system sends verification, approval, rejection, and validation notifications. To enable this, configure an SMTP server in the .env file.
 
-Exemplo:
+Example:
 
 ```env
 MAIL_MAILER=smtp
-MAIL_HOST=smtp.exemplo.com
+MAIL_HOST=smtp.example.com
 MAIL_PORT=587
-MAIL_USERNAME=utilizador
-MAIL_PASSWORD=palavra-passe
+MAIL_USERNAME=username
+MAIL_PASSWORD=password
 MAIL_SCHEME=tls
-MAIL_FROM_ADDRESS=no-reply@exemplo.com
+MAIL_FROM_ADDRESS=no-reply@example.com
 MAIL_FROM_NAME="PPG"
 ```
 
-Se não configurares SMTP, algumas funcionalidades de email podem não funcionar corretamente.
+If SMTP is not configured, some email-related features may not work correctly.
 
 ---
 
-## Fluxo principal do sistema
+## Main system flow
 
-1. O utilizador cria conta e confirma o email.
-2. Seleciona o tipo de documento aplicável ao seu curso.
-3. Preenche os campos dinâmicos do formulário.
-4. O sistema gera o protocolo e permite exportação em PDF ou DOCX.
-5. A administração revê o documento e decide se aceita, rejeita ou valida.
-6. Após aprovação, o utilizador submete a versão final assinada.
-7. O sistema mantém histórico e logs das ações relevantes.
+1. The user creates an account and confirms their email.
+2. The user selects the document type for their course.
+3. The required dynamic fields are filled in.
+4. The system generates the protocol and allows export to PDF or DOCX.
+5. The administration reviews the document and decides whether to accept, reject, or validate it.
+6. After approval, the user uploads the final signed version.
+7. The system keeps a history and logs of relevant actions.
 
 ---
 
-## Estrutura resumida do projeto
+## Project structure summary
 
 ```text
 app/
- ├─ Http/Controllers/   # Lógica da aplicação
- ├─ Models/             # Modelos Eloquent
- └─ Services/           # Serviços auxiliares, como envio de email
+ ├─ Http/Controllers/   # Application logic
+ ├─ Models/             # Eloquent models
+ └─ Services/           # Helper services such as email sending
 
 routes/
- └─ web.php             # Rotas principais da aplicação
+ └─ web.php             # Main application routes
 
-resources/views/        # Interfaces Blade
+resources/views/        # Blade interfaces
 
 database/
- ├─ migrations/         # Estrutura da base de dados
- └─ seeders/            # Seeders para ambiente local
+ ├─ migrations/         # Database structure
+ └─ seeders/            # Seeders for local setup
 ```
 
 ---
 
-## Comandos úteis
+## Useful commands
 
 ```bash
 composer dev
@@ -202,23 +202,14 @@ php artisan route:list
 
 ---
 
-## Observações
+## Notes
 
-- O projeto foi estruturado para uso académico e administrativo.
-- Algumas funcionalidades dependem de envio de email e de ficheiros PDF válidos.
-- Para ambiente Windows, a utilização com XAMPP é adequada e compatível com MySQL/MariaDB.
-
----
-
-## Melhorias futuras sugeridas
-
-- Adicionar testes automáticos para fluxos críticos
-- Melhorar paginação e filtros na área administrativa
-- Integrar armazenamento externo para documentos
-- Reforçar auditoria e permissões por perfil
+- The project was designed for academic and administrative use.
+- Some features depend on email delivery and valid PDF files.
+- On Windows, running the project with XAMPP is suitable and compatible with MySQL/MariaDB.
 
 ---
 
-## Licença
+## License
 
-Projeto para contexto académico/institucional. Ajusta a licença conforme as regras da organização ou da equipa responsável.
+Project intended for academic/institutional context. Adjust the license according to the rules of the organization or responsible team.
