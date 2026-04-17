@@ -86,6 +86,8 @@ class AdminPanelController extends Controller
         $status        = $finalDocument->status;
         $userId        = $finalDocument->user_id;
         $planId        = $finalDocument->plan_id;
+        
+        $userEmail = User::find($userId)->email ?? '';
 
         $teachers    = Professor::all()->toArray();
         $fieldNames  = Field::where('document_id', $documentId)->get()->toArray();
@@ -95,7 +97,7 @@ class AdminPanelController extends Controller
 
         return view('adminDashboard.viewUserDocument', compact(
             'finalDocumentId', 'documentId', 'status', 'userId', 'planId',
-            'teachers', 'fieldNames', 'fieldValues'
+            'teachers', 'fieldNames', 'fieldValues', 'userEmail'
         ));
     }
 
@@ -344,6 +346,7 @@ class AdminPanelController extends Controller
             $fieldNames      = $request->input('field_names', []);
             $status          = $request->input('status');
             $userEmail       = $request->input('email');
+            
 
             $finalDocument   = FinalDocument::find($finalDocumentId);
             if (!$finalDocument) throw new Exception('Documento não encontrado');
@@ -364,7 +367,7 @@ class AdminPanelController extends Controller
                     $finalDocument->update(['status' => $status]);
 
                     if (in_array($status, ['Aceite', 'Recusado'])) {
-                        $rejectionReason = $request->input('rejection_reason', '');
+                        $rejectionReason = $request->input('rejection_reason') ?? '';
                         $this->sendStatusEmail($userEmail, $finalDocumentId,
                             $status === 'Recusado' ? 'rejected' : 'accepted',
                             $rejectionReason

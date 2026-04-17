@@ -85,7 +85,7 @@ class FormController extends Controller
             ->get()
             ->toArray();
 
-        $documentId = $request->query('document') ? (int) $request->query('document') : null;
+        $documentId = $request->query('document') ? (int) $request->query('document') : null; 
 
         if (!$documentId || $documentId <= 0) {
             return redirect('/form');

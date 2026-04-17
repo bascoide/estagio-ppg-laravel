@@ -111,6 +111,7 @@
                     onclick="history.go(-1)">
                     Voltar
                 </button>
+                <input type="hidden" name="email" value="{{ $userEmail }}">
                 <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer {{ in_array($status, ['Inativo', 'Aceite', 'Recusado']) ? 'hidden' : '' }}">
                     Guardar Alterações
                 </button>

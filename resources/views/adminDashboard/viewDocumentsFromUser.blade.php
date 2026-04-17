@@ -55,7 +55,10 @@
                         <input type="hidden" name="document_id" value="{{ $document['document_id'] }}">
 
                         <div class="flex-grow w-full items-start {{ !$isValidationStatus ? 'cursor-pointer' : '' }}"
-                            {{ !$isValidationStatus ? 'onclick="document.getElementById(\'documentForm'.$document['final_document_id'].'\').submit()"' : '' }}>
+                            @unless($isValidationStatus)
+                                onclick="document.getElementById('documentForm{{ $document['final_document_id'] }}').submit()"
+                            @endunless
+                            >
                             {{ $document['document_name'] }} - {{ date('d/m/Y H:i', strtotime($document['created_at'])) }}
                         </div>
 
