@@ -10,9 +10,13 @@ use Illuminate\Support\Facades\Hash;
 
 class UserUploadFinalDocumentController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        return view('userUploadFinalDocument');
+        $finalDocumentId = (int) $request->query('final_document_id', 0);
+
+        return view('userUploadFinalDocument', [
+            'finalDocumentId' => $finalDocumentId
+        ]);
     }
 
     public function uploadFinalDocument(Request $request)

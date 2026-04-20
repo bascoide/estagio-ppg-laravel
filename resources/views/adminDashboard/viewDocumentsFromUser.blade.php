@@ -7,6 +7,15 @@
     <h2 class="text-gray-600 mt-2">{{ $userName }}</h2>
     <br>
 
+    <div class="flex gap-1 mb-4">
+        <select class="border p-2 rounded w-1/3 h-10" id="presidential_email">
+            <option>Selecione um email presidencial</option>
+            @foreach($presidencialEmails as $email)
+                <option value="{{ $email['email'] }}">{{ $email['email'] }}</option>
+            @endforeach
+        </select>
+    </div>
+
     <form method="GET">
         <input type="hidden" name="user_id" value="{{ $userId }}">
         <div class="flex space-x-4">
@@ -98,7 +107,7 @@
                                     id="documentValidationForm{{ $document['final_document_id'] }}">
                                     @csrf
                                     <input type="hidden" name="final_document_id" value="{{ $document['final_document_id'] }}">
-                                    <input type="hidden" name="email" value="{{ $userEmail }}">
+                                    <input type="hidden" name="presidencial_email" class="hidden_presidencial_email">
                                     <button class="bg-green-500 text-white rounded p-2 w-10 h-10 cursor-pointer hover:bg-green-600"
                                         onclick="validateDocument({{ $document['final_document_id'] }}, event)">
                                         ✔
@@ -150,4 +159,19 @@
 </div>
 
 <script src="{{ asset('js/statusNeedValidationDocuments.js') }}"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const presidentialEmail = document.getElementById('presidential_email');
+    if (presidentialEmail) {
+        presidentialEmail.addEventListener('input', function () {
+            const selectedValue = this.value;
+            const hiddenInputs = document.querySelectorAll('.hidden_presidencial_email');
+            hiddenInputs.forEach(function (input) {
+                input.value = selectedValue;
+            });
+        });
+    }
+});
+</script>
 @endsection

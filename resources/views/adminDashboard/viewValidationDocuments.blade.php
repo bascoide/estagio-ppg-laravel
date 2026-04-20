@@ -7,7 +7,7 @@
     <h1 class="bold text-2xl mb-4">Protocolos Validados</h1>
 
     <h3 class="text-lg text-blue-800 mb-2">Quantidade de Protocolos</h3>
-    <form method="GET" class="mb-4">
+    <form method="GET" class="mb-4" id="filterForm">
         <select name="course_id" id="course" class="border-s border-grey-100 p-2 bg-gray-100" required>
             <option value="">Selecione um curso</option>
             @foreach($courses as $course)
@@ -42,8 +42,9 @@
                 </option>
             @endforeach
         </select>
+        <input type="hidden" id="select_school_year_input" name="select_school_year">
         <button type="submit" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-            Ver quantidade
+            Ver quantidade e protocolos
         </button>
     </form>
 
@@ -52,18 +53,14 @@
     @endisset
 
     <h3 class="text-lg text-blue-800 mb-2">Gestão de Protocolos</h3>
-    <form method="GET" class="flex items-center gap-2 mb-4">
-        <select name="select_school_year" id="select_school_year" class="border-s border-grey-100 p-2 bg-gray-100">
-            @foreach($schoolYears as $year)
-                <option value="{{ $year }}" {{ request('select_school_year') == $year ? 'selected' : '' }}>
-                    {{ $year }}
-                </option>
-            @endforeach
-        </select>
-        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-            Filtrar
-        </button>
-    </form>
+    <p class="text-sm text-gray-500 mb-4">
+        @if(request('course_id') && request('year_type'))
+            Mostrando protocolos filtrados. 
+            <a href="?page=1" class="text-blue-600 hover:underline">Limpar filtros</a>
+        @else
+            Selecione os filtros acima para ver os protocolos.
+        @endif
+    </p>
 
     <ul class="mt-2">
         @if(count($documents) > 0)

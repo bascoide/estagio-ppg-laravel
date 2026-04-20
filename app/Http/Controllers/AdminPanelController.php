@@ -115,6 +115,7 @@ class AdminPanelController extends Controller
         $status      = $request->query('status', '');
 
         $userName = User::find($userId)->name ?? '';
+        $userEmail = User::find($userId)->email ?? '';
 
         $query = FinalDocument::join('document', 'final_document.document_id', '=', 'document.id')
             ->where('final_document.user_id', $userId)
@@ -130,9 +131,10 @@ class AdminPanelController extends Controller
         elseif ($orderBy === 'date_oldest') $query->orderBy('final_document.created_at');
 
         $documents = $query->get()->toArray();
+        $presidencialEmails = PresidentEmail::all()->toArray();
 
         return view('adminDashboard.viewDocumentsFromUser', compact(
-            'documents', 'userName', 'userId', 'search', 'dateFilter', 'orderBy', 'status'
+            'documents', 'userName', 'userId', 'userEmail', 'search', 'dateFilter', 'orderBy', 'status', 'presidencialEmails'
         ));
     }
 
@@ -143,7 +145,10 @@ class AdminPanelController extends Controller
         $offset       = ($currentPage - 1) * $itemsPerPage;
 
         $documents = $this->getDocumentsWithStatus('Pendente', $offset, $itemsPerPage);
-        $totalRecords = FinalDocument::where('status', 'Pendente')->whereNotNull('plan_id')->count();
+        $totalRecords = FinalDocument::join('document', 'final_document.document_id', '=', 'document.id')
+            ->where('final_document.status', 'Pendente')
+            ->where('document.type', '!=', 'Plano')
+            ->count();
         $totalPages   = max(1, (int) ceil($totalRecords / $itemsPerPage));
 
         if ($currentPage > $totalPages && $totalPages > 0) {
@@ -166,7 +171,7 @@ class AdminPanelController extends Controller
 
         $documents          = $this->getDocumentsWithStatus('Por validar', $offset, $itemsPerPage);
         $presidencialEmails = PresidentEmail::all()->toArray();
-        $totalRecords       = FinalDocument::where('status', 'Por validar')->whereNotNull('plan_id')->count();
+        $totalRecords       = FinalDocument::where('status', 'Por validar')->count();
         $totalPages         = max(1, (int) ceil($totalRecords / $itemsPerPage));
 
         if ($currentPage > $totalPages && $totalPages > 0) {
@@ -229,7 +234,8 @@ class AdminPanelController extends Controller
             }
         }
 
-        $documents = $this->getDocumentsWithStatus('Validado', $offset, $itemsPerPage, $startDate, $endDate);
+        $courseId = $request->query('course_id', null);
+        $documents = $this->getDocumentsWithStatus('Validado', $offset, $itemsPerPage, $startDate, $endDate, $courseId);
 
         $dates       = FinalDocument::where('status', 'Validado')->selectRaw('DISTINCT DATE(created_at) as d')->orderByDesc('d')->pluck('d')->toArray();
         $schoolYears = [];
@@ -271,8 +277,15 @@ class AdminPanelController extends Controller
         }
 
         $courses      = Course::with('typeCourse')->get()->toArray();
-        $totalRecords = FinalDocument::where('status', 'Validado')->whereNotNull('plan_id')
-            ->whereBetween('created_at', [$startDate, $endDate])->count();
+        $totalQuery = FinalDocument::join('user', 'final_document.user_id', '=', 'user.id')
+            ->where('final_document.status', 'Validado')
+            ->whereBetween('final_document.created_at', [$startDate, $endDate]);
+        
+        if ($courseId !== null) {
+            $totalQuery->where('user.course_id', $courseId);
+        }
+        
+        $totalRecords = $totalQuery->count();
         $totalPages   = max(1, (int) ceil($totalRecords / $itemsPerPage));
 
         if ($currentPage > $totalPages && $totalPages > 0) {
@@ -324,7 +337,17 @@ class AdminPanelController extends Controller
             }
         }
 
-        return view('adminDashboard.additionDocument');
+        $finalDocumentId = (int) $request->query('final_document_id', 0);
+        $additions = [];
+        
+        if ($finalDocumentId) {
+            $additions = \App\Models\Addition::where('final_document_id', $finalDocumentId)
+                ->select('id', 'name', 'path as addition_path', 'final_document_id', 'created_at')
+                ->get()
+                ->toArray();
+        }
+
+        return view('adminDashboard.additionDocument', compact('additions', 'finalDocumentId'));
     }
 
     public function viewFinalDocumentAdmin(Request $request)
@@ -460,13 +483,14 @@ class AdminPanelController extends Controller
         }
     }
 
-    private function getDocumentsWithStatus(string $status, int $offset, int $limit, ?string $startDate = null, ?string $endDate = null): array
+    private function getDocumentsWithStatus(string $status, int $offset, int $limit, ?string $startDate = null, ?string $endDate = null, ?int $courseId = null): array
     {
         $query = DB::table('final_document')
-            ->join('submitted_plans', 'submitted_plans.id', '=', 'final_document.plan_id')
+            ->leftJoin('submitted_plans', 'submitted_plans.id', '=', 'final_document.plan_id')
             ->join('user', 'final_document.user_id', '=', 'user.id')
             ->join('document', 'final_document.document_id', '=', 'document.id')
             ->where('final_document.status', $status)
+            ->where('document.type', '!=', 'Plano')
             ->select(
                 'user.name', 'user.email',
                 'document.id as document_id', 'document.name as document_name', 'document.type as document_type',
@@ -478,6 +502,15 @@ class AdminPanelController extends Controller
             $query->whereBetween('final_document.created_at', [$startDate, $endDate]);
         }
 
-        return $query->limit($limit)->offset($offset)->get()->toArray();
+        if ($courseId !== null) {
+            $query->where('user.course_id', $courseId);
+        }
+
+        $results = $query->limit($limit)->offset($offset)->get();
+        
+        // Converter os resultados para arrays
+        return $results->map(function($item) {
+            return (array) $item;
+        })->toArray();
     }
 }
