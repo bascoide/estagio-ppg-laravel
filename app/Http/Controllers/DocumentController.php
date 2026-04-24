@@ -169,7 +169,7 @@ class DocumentController extends Controller
             }
 
             if ($planId <= 0 || $planId !== (int) $finalDocument->plan_id) {
-                abort(400, 'Plano invÃ¡lido');
+                abort(400, 'Plano invalido');
             }
 
             \DB::table('submitted_plans')->where('id', $finalDocument->plan_id)->update(['verified' => true]);
