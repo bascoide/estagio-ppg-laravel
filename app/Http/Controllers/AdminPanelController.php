@@ -83,6 +83,10 @@ class AdminPanelController extends Controller
         }
 
         $finalDocument = FinalDocument::find($finalDocumentId);
+        if (!$finalDocument) {
+            return redirect('/show-documents')->with('error', 'Documento nÃ£o encontrado');
+        }
+
         $status        = $finalDocument->status;
         $userId        = $finalDocument->user_id;
         $planId        = $finalDocument->plan_id;
@@ -195,7 +199,7 @@ class AdminPanelController extends Controller
 
         $documents          = $this->getDocumentsWithStatus('Por validar', $offset, $itemsPerPage);
         $presidencialEmails = PresidentEmail::all()->toArray();
-        $totalRecords       = FinalDocument::where('status', 'Por validar')->count();
+        $totalRecords       = $this->countDocumentsWithStatus('Por validar');
         $totalPages         = max(1, (int) ceil($totalRecords / $itemsPerPage));
 
         if ($currentPage > $totalPages && $totalPages > 0) {
@@ -302,7 +306,9 @@ class AdminPanelController extends Controller
 
         $courses      = Course::with('typeCourse')->get()->toArray();
         $totalQuery = FinalDocument::join('user', 'final_document.user_id', '=', 'user.id')
+            ->join('document', 'final_document.document_id', '=', 'document.id')
             ->where('final_document.status', 'Validado')
+            ->where('document.type', '!=', 'Plano')
             ->whereBetween('final_document.created_at', [$startDate, $endDate]);
         
         if ($courseId !== null) {
@@ -582,6 +588,25 @@ class AdminPanelController extends Controller
             'created_at'   => now(),
             'updated_at'   => now(),
         ]);
+    }
+
+    private function countDocumentsWithStatus(string $status, ?string $startDate = null, ?string $endDate = null, ?int $courseId = null): int
+    {
+        $query = DB::table('final_document')
+            ->join('user', 'final_document.user_id', '=', 'user.id')
+            ->join('document', 'final_document.document_id', '=', 'document.id')
+            ->where('final_document.status', $status)
+            ->where('document.type', '!=', 'Plano');
+
+        if ($startDate && $endDate) {
+            $query->whereBetween('final_document.created_at', [$startDate, $endDate]);
+        }
+
+        if ($courseId !== null) {
+            $query->where('user.course_id', $courseId);
+        }
+
+        return $query->count();
     }
 
     private function getDocumentsWithStatus(string $status, int $offset, int $limit, ?string $startDate = null, ?string $endDate = null, ?int $courseId = null): array

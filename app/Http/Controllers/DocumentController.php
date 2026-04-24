@@ -162,15 +162,18 @@ class DocumentController extends Controller
         $planId = (int) $request->input('plan_id', 0);
         $finalDocumentId = (int) $request->input('final_document_id', 0);
 
-        if ($planId > 0) {
-            \DB::table('submitted_plans')->where('id', $planId)->update(['verified' => true]);
-        }
-
         if ($finalDocumentId > 0) {
             $finalDocument = FinalDocument::with('plan')->find($finalDocumentId);
             if (!$finalDocument || !$finalDocument->plan) {
                 abort(404, 'File not found');
             }
+
+            if ($planId <= 0 || $planId !== (int) $finalDocument->plan_id) {
+                abort(400, 'Plano invÃ¡lido');
+            }
+
+            \DB::table('submitted_plans')->where('id', $finalDocument->plan_id)->update(['verified' => true]);
+
             $filePath = public_path($finalDocument->plan->path);
             if (!file_exists($filePath)) {
                 abort(404, 'File not found');

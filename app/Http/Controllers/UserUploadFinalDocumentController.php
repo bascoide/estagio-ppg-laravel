@@ -8,6 +8,7 @@ use App\Models\User;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 
 class UserUploadFinalDocumentController extends Controller
 {
@@ -24,18 +25,16 @@ class UserUploadFinalDocumentController extends Controller
     {
         $finalDocumentId = (int) $request->query('final_document_id', 0);
 
-        if (!$request->hasFile('document')) {
+        try {
+            $request->validate([
+                'document' => ['required', 'file', 'mimes:pdf', 'mimetypes:application/pdf', 'max:10240'],
+            ]);
+        } catch (ValidationException $e) {
             return redirect('/user-upload-final-document-form?final_document_id=' . $finalDocumentId)
-                ->with('error', 'Nenhum arquivo foi enviado.');
+                ->with('error', 'Apenas arquivos PDF válidos são permitidos.');
         }
 
-        $file     = $request->file('document');
-        $fileType = strtolower($file->getClientOriginalExtension());
-
-        if ($fileType !== 'pdf') {
-            return redirect('/user-upload-final-document-form?final_document_id=' . $finalDocumentId)
-                ->with('error', 'Apenas arquivos PDF são permitidos.');
-        }
+        $file = $request->file('document');
 
         $oldFinalDocument = FinalDocument::find($finalDocumentId);
         if (!$oldFinalDocument) {
@@ -66,7 +65,7 @@ class UserUploadFinalDocumentController extends Controller
         $uploadDir = public_path('uploads/generated_docs/');
         if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
 
-        $filename   = uniqid() . '_' . $file->getClientOriginalName();
+        $filename   = uniqid('final_doc_', true) . '.pdf';
         $file->move($uploadDir, $filename);
 
         $newFinalDocument = FinalDocument::create([

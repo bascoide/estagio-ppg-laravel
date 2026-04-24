@@ -372,9 +372,14 @@ class FormController extends Controller
 
                 foreach ($submittedValues['field_names'] as $index => $submittedName) {
                     if (trim($submittedName) === $fieldName && isset($submittedValues['field_values'][$index])) {
-                        $value = $submittedValues['field_values'][$index];
-                        if ($value === 'true')  $value = '☒';
-                        if ($value === 'false') $value = '☐';
+                        $value = (string) $submittedValues['field_values'][$index];
+                        if ($value === 'true') {
+                            $value = '☒';
+                        } elseif ($value === 'false') {
+                            $value = '☐';
+                        } else {
+                            $value = htmlspecialchars($value, ENT_XML1 | ENT_COMPAT, 'UTF-8');
+                        }
 
                         $processedXml = str_replace($fullPlaceholder, $value, $processedXml, $count);
                         $replaceCount += $count;
