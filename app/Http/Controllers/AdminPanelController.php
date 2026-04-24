@@ -93,6 +93,30 @@ class AdminPanelController extends Controller
         $fieldNames  = Field::where('document_id', $documentId)->get()->toArray();
         $fieldValues = FieldValue::where('final_document_id', $finalDocumentId)->get()->toArray();
 
+        if (empty($fieldValues)) {
+            $relatedDocumentsQuery = FinalDocument::where('user_id', $userId)
+                ->where('document_id', $documentId)
+                ->where('id', '!=', $finalDocumentId)
+                ->where('created_at', '<=', $finalDocument->created_at)
+                ->orderByDesc('created_at');
+
+            if ($planId === null) {
+                $relatedDocumentsQuery->whereNull('plan_id');
+            } else {
+                $relatedDocumentsQuery->where('plan_id', $planId);
+            }
+
+            $relatedDocumentIds = $relatedDocumentsQuery->pluck('id');
+
+            foreach ($relatedDocumentIds as $relatedDocumentId) {
+                $fallbackFieldValues = FieldValue::where('final_document_id', $relatedDocumentId)->get()->toArray();
+                if (!empty($fallbackFieldValues)) {
+                    $fieldValues = $fallbackFieldValues;
+                    break;
+                }
+            }
+        }
+
         session(['previous_page' => $request->fullUrl()]);
 
         return view('adminDashboard.viewUserDocument', compact(
@@ -366,13 +390,16 @@ class AdminPanelController extends Controller
         try {
             $finalDocumentId = (int) $request->input('final_document_id');
             $fields          = $request->input('fields', []);
-            $fieldNames      = $request->input('field_names', []);
             $status          = $request->input('status');
-            $userEmail       = $request->input('email');
+            $userEmail       = '';
             
 
             $finalDocument   = FinalDocument::find($finalDocumentId);
             if (!$finalDocument) throw new Exception('Documento não encontrado');
+
+            $userEmail = $this->getDocumentUserEmail($finalDocument);
+            DB::beginTransaction();
+            $professorName = $this->extractProfessorNameFromRequest($request);
 
             $hasChanges = false;
             foreach ($fields as $fieldId => $value) {
@@ -391,34 +418,21 @@ class AdminPanelController extends Controller
 
                     if (in_array($status, ['Aceite', 'Recusado'])) {
                         $rejectionReason = $request->input('rejection_reason') ?? '';
-                        $this->sendStatusEmail($userEmail, $finalDocumentId,
+                        if (!$this->sendStatusEmail($userEmail, $finalDocumentId,
                             $status === 'Recusado' ? 'rejected' : 'accepted',
                             $rejectionReason
-                        );
+                        )) {
+                            throw new Exception('Falha ao enviar email de notificaÃ§Ã£o.');
+                        }
                     }
                 }
 
                 // Associar professor se necessário
-                if ($request->has('professor_name')) {
-                    $professorName = $request->input('professor_name');
-                    $courseId      = $finalDocument->user->course_id;
-
-                    if (!$professorName) throw new Exception('Nome do orientador não encontrado');
-
-                    $professor = Professor::where('name', $professorName)->first();
-                    if (!$professor) {
-                        $professor = Professor::create(['name' => $professorName]);
-                    }
-
-                    DB::table('professor_course')->insert([
-                        'professor_id' => $professor->id,
-                        'course_id'    => $courseId,
-                        'intern_id'    => $finalDocument->user_id,
-                        'created_at'   => now(),
-                        'updated_at'   => now(),
-                    ]);
+                if ($professorName !== null) {
+                    $this->syncProfessorAssociation($finalDocument, $professorName);
                 }
 
+                DB::commit();
                 (new LogsController())->logAction('edit-document', $finalDocumentId);
                 return back()->with('message', 'Status atualizado com sucesso!');
             }
@@ -430,22 +444,34 @@ class AdminPanelController extends Controller
                     ->update(['value' => $value]);
             }
 
+            (new FormController())->regenerateFinalDocumentPdf($finalDocument);
+
             if ($status) {
                 $finalDocument->update(['status' => $status]);
 
                 if (in_array($status, ['Aceite', 'Recusado'])) {
                     $rejectionReason  = $request->input('rejection_reason', '');
                     $rejectedFields   = $request->input('rejected_fields', []);
-                    $this->sendStatusEmail($userEmail, $finalDocumentId,
+                    if (!$this->sendStatusEmail($userEmail, $finalDocumentId,
                         $status === 'Recusado' ? 'rejected' : 'accepted',
                         $rejectionReason, $rejectedFields
-                    );
+                    )) {
+                        throw new Exception('Falha ao enviar email de notificaÃ§Ã£o.');
+                    }
                 }
             }
 
+            if ($professorName !== null) {
+                $this->syncProfessorAssociation($finalDocument, $professorName);
+            }
+
+            DB::commit();
             (new LogsController())->logAction('edit-document', $finalDocumentId);
             return back()->with('message', 'Documento atualizado com sucesso!');
         } catch (Exception $e) {
+            if (DB::transactionLevel() > 0) {
+                DB::rollBack();
+            }
             return back()->with('error', $e->getMessage());
         }
     }
@@ -454,33 +480,108 @@ class AdminPanelController extends Controller
     {
         try {
             $finalDocumentId = (int) $request->input('final_document_id');
-            $userEmail       = $request->input('email');
+            $finalDocument = FinalDocument::find($finalDocumentId);
+            if (!$finalDocument) {
+                throw new Exception('Documento nÃ£o encontrado');
+            }
 
-            FinalDocument::where('id', $finalDocumentId)->update(['status' => 'Cancelado']);
-            (new EmailService())->sendCancelledEmail($userEmail, $finalDocumentId);
+            $userEmail = $this->getDocumentUserEmail($finalDocument);
+
+            DB::beginTransaction();
+            $finalDocument->update(['status' => 'Cancelado']);
+
+            if (!(new EmailService())->sendCancelledEmail($userEmail, $finalDocumentId)) {
+                throw new Exception('Falha ao enviar email de cancelamento.');
+            }
+
+            DB::commit();
             (new LogsController())->logAction('annul-document', $finalDocumentId);
 
             $previousPage = session('previous_page', '/show-documents');
             return redirect($previousPage)->with('message', 'Documento cancelado com sucesso!');
         } catch (Exception $e) {
+            if (DB::transactionLevel() > 0) {
+                DB::rollBack();
+            }
             return back()->with('error', $e->getMessage());
         }
     }
 
-    private function sendStatusEmail(string $userEmail, int $documentId, string $type, string $rejectionReason = '', array $rejectedFields = []): void
+    private function sendStatusEmail(string $userEmail, int $documentId, string $type, string $rejectionReason = '', array $rejectedFields = []): bool
     {
         $emailService = new EmailService();
         switch ($type) {
             case 'rejected':
-                $emailService->sendRejectedEmail($userEmail, $documentId, $rejectionReason, $rejectedFields);
-                break;
+                return $emailService->sendRejectedEmail($userEmail, $documentId, $rejectionReason, $rejectedFields);
             case 'accepted':
-                $emailService->sendAcceptedEmail($userEmail, $documentId);
-                break;
+                return $emailService->sendAcceptedEmail($userEmail, $documentId);
             case 'cancelled':
-                $emailService->sendCancelledEmail($userEmail, $documentId);
-                break;
+                return $emailService->sendCancelledEmail($userEmail, $documentId);
         }
+
+        return false;
+    }
+
+    private function getDocumentUserEmail(FinalDocument $finalDocument): string
+    {
+        return $finalDocument->user->email ?? '';
+    }
+
+    private function extractProfessorNameFromRequest(Request $request): ?string
+    {
+        $fields = $request->input('fields', []);
+        if (!is_array($fields) || empty($fields)) {
+            return null;
+        }
+
+        $fieldIds = array_map('intval', array_keys($fields));
+        $professorFieldIds = Field::whereIn('id', $fieldIds)
+            ->where('data_type', 'like', '%professor%')
+            ->pluck('id')
+            ->all();
+
+        foreach ($professorFieldIds as $fieldId) {
+            $professorName = trim((string) ($fields[$fieldId] ?? ''));
+            if ($professorName !== '') {
+                return $professorName;
+            }
+        }
+
+        return null;
+    }
+
+    private function syncProfessorAssociation(FinalDocument $finalDocument, string $professorName): void
+    {
+        $courseId = $finalDocument->user->course_id ?? null;
+        if (!$courseId) {
+            throw new Exception('Curso do aluno nÃ£o encontrado');
+        }
+
+        $professor = Professor::firstOrCreate(['name' => $professorName]);
+
+        $existingAssociation = DB::table('professor_course')
+            ->where('intern_id', $finalDocument->user_id)
+            ->where('course_id', $courseId)
+            ->first();
+
+        if ($existingAssociation) {
+            DB::table('professor_course')
+                ->where('id', $existingAssociation->id)
+                ->update([
+                    'professor_id' => $professor->id,
+                    'updated_at'   => now(),
+                ]);
+
+            return;
+        }
+
+        DB::table('professor_course')->insert([
+            'professor_id' => $professor->id,
+            'course_id'    => $courseId,
+            'intern_id'    => $finalDocument->user_id,
+            'created_at'   => now(),
+            'updated_at'   => now(),
+        ]);
     }
 
     private function getDocumentsWithStatus(string $status, int $offset, int $limit, ?string $startDate = null, ?string $endDate = null, ?int $courseId = null): array
@@ -492,9 +593,9 @@ class AdminPanelController extends Controller
             ->where('final_document.status', $status)
             ->where('document.type', '!=', 'Plano')
             ->select(
-                'user.name', 'user.email',
-                'document.id as document_id', 'document.name as document_name', 'document.type as document_type',
-                'final_document.id as final_document_id', 'final_document.created_at as final_document_created_at',
+                'user.id as user_id', 'user.name', 'user.email',
+                'document.id as document_id', 'document.name as name', 'document.type as type',
+                'final_document.id as final_document_id', 'final_document.created_at as created_at',
                 'submitted_plans.id as plan_id', 'submitted_plans.path as plan_path', 'submitted_plans.verified as plan_is_verified'
             );
 

@@ -5,7 +5,9 @@
     <h3 class="bold text-2xl">Upload</h3>
 
     @if(!isset($uuid))
-        @php session()->flash('error', 'Nenhum documento foi encontrado'); @endphp
+        @if(!session('message') && !session('error'))
+            @php session()->flash('error', 'Nenhum documento foi encontrado'); @endphp
+        @endif
         @include('messageError')
     @else
         @include('messageError')

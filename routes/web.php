@@ -18,6 +18,8 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::get('/register',  [AuthController::class, 'showRegister'])->name('register');
 Route::post('/register', [AuthController::class, 'register']);
 Route::get('/user-verification', [AuthController::class, 'verifyUser'])->name('user-verification');
+Route::get('/president-upload-final-document-form', [DocumentValidationController::class, 'presidentValidationPage'])->name('president-upload-final-document-form');
+Route::post('/president-final-document',            [DocumentValidationController::class, 'presidentFinalDocument'])->name('president-final-document');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // Authenticated user routes
@@ -55,8 +57,6 @@ Route::middleware(['admin'])->group(function () {
     Route::post('/print-document-admin', [DocumentController::class, 'printDocumentForm'])->name('print-document-admin');
     Route::post('/view-plan',            [DocumentController::class, 'viewPlan'])->name('view-plan');
 
-    Route::get('/president-upload-final-document-form', [DocumentValidationController::class, 'presidentValidationPage'])->name('president-upload-final-document-form');
-    Route::post('/president-final-document',            [DocumentValidationController::class, 'presidentFinalDocument'])->name('president-final-document');
     Route::post('/validate-document',                   [DocumentValidationController::class, 'validateDocument'])->name('validate-document');
     Route::post('/invalidate-document',                 [DocumentValidationController::class, 'invalidateDocument'])->name('invalidate-document');
     Route::match(['GET', 'POST'], '/president-list',    [DocumentValidationController::class, 'listPresidents'])->name('president-list');

@@ -44,6 +44,7 @@
     <hr class="border-gray-300 my-2">
     <form action="{{ route('create-status-excel') }}" method="POST">
         @csrf
+        <input type="hidden" value="{{ $professor['id'] ?? '' }}" name="professor_id">
         <input type="hidden" value="{{ $professor['name'] ?? '' }}" name="teacher_name">
         <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
             Gerar excel do estado dos alunos

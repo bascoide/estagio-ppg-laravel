@@ -16,7 +16,7 @@
                         <tr>
                             <th class="px-4 py-3 w-1/3">Campo</th>
                             <th class="px-4 py-3 w-1/3">Valor Atual</th>
-                            @if(!in_array($status, ['Inativo', 'Aceite', 'Recusado']))
+                            @if(!in_array($status, ['Inativo', 'Aceite', 'Recusado', 'Validado']))
                                 <th class="px-4 py-3 w-1/3">Novo Valor</th>
                             @endif
                         </tr>
@@ -47,7 +47,7 @@
                                     {{ $fieldName }}
                                 </td>
                                 <td class="px-4 py-3 w-1/3">{{ $value }}</td>
-                                @if(!in_array($status, ['Inativo', 'Aceite', 'Recusado']))
+                                @if(!in_array($status, ['Inativo', 'Aceite', 'Recusado', 'Validado']))
                                     <td class="px-4 py-3 w-1/3">
                                         <input type="hidden" name="field_names[{{ $fieldId }}]" value="{{ $fieldName }}">
                                         @if(stripos($fieldType, 'professor') !== false)
@@ -81,7 +81,7 @@
 
             <div class="mt-4 flex justify-end sticky bottom-0 bg-white pt-2 pb-2 w-full">
                 <div class="flex flex-grow">
-                    @if(!in_array($status, ['Inativo', 'Aceite', 'Recusado']))
+                    @if(!in_array($status, ['Inativo', 'Aceite', 'Recusado', 'Validado']))
                         <div class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mr-2">
                             <label for="aceitar">Aceitar</label>
                             <input type="radio" name="status" value="Aceite" id="aceitar" {{ $status === 'Aceite' ? 'checked' : '' }} onchange="toggleRejectionReason()">
@@ -112,7 +112,7 @@
                     Voltar
                 </button>
                 <input type="hidden" name="email" value="{{ $userEmail }}">
-                <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer {{ in_array($status, ['Inativo', 'Aceite', 'Recusado']) ? 'hidden' : '' }}">
+                <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer {{ in_array($status, ['Inativo', 'Aceite', 'Recusado', 'Validado']) ? 'hidden' : '' }}">
                     Guardar Alterações
                 </button>
             </div>

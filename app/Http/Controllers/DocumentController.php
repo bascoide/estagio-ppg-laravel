@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Addition;
 use App\Models\Document;
 use App\Models\Field;
 use App\Models\FinalDocument;
@@ -20,14 +21,16 @@ class DocumentController extends Controller
         if (!$documentId) {
             abort(400, 'ID do documento não fornecido');
         }
-        
 
-        $document = \DB::table('final_document')->where('id', $documentId)->first();
+
+        $document = FinalDocument::find($documentId);
 
         if (!$document) {
             abort(404, 'Documento não encontrado');
         }
         
+        $this->authorizeFinalDocumentAccess($document);
+
         $filePath = public_path('uploads/generated_docs/' . $document->pdf_path);
         if (!file_exists($filePath)) {
             abort(404, 'Documento não encontrado');
@@ -71,8 +74,8 @@ class DocumentController extends Controller
             abort(404, 'Caminho não encontrado');
         }
 
-        // Clone the DOCX to a temp file
-        $clonedFilePath = public_path('uploads/schema/temp_document.docx');
+        // Clone the DOCX to a unique temp file
+        $clonedFilePath = public_path('uploads/schema/' . uniqid('temp_document_', true) . '.docx');
         copy($filePath, $clonedFilePath);
 
         $this->replaceToEmpty($clonedFilePath, $document->type);
@@ -88,9 +91,12 @@ class DocumentController extends Controller
         ]);
 
         // Delete temp PDF after streaming
-        register_shutdown_function(function () use ($path) {
+        register_shutdown_function(function () use ($path, $clonedFilePath) {
             if (file_exists($path)) {
                 unlink($path);
+            }
+            if (file_exists($clonedFilePath)) {
+                unlink($clonedFilePath);
             }
         });
 
@@ -153,13 +159,19 @@ class DocumentController extends Controller
 
     public function viewPlan(Request $request)
     {
-        if ($request->has('plan_id')) {
-            $planId = (int) $request->input('plan_id');
+        $planId = (int) $request->input('plan_id', 0);
+        $finalDocumentId = (int) $request->input('final_document_id', 0);
+
+        if ($planId > 0) {
             \DB::table('submitted_plans')->where('id', $planId)->update(['verified' => true]);
         }
 
-        if ($request->has('plan_path')) {
-            $filePath = public_path($request->input('plan_path'));
+        if ($finalDocumentId > 0) {
+            $finalDocument = FinalDocument::with('plan')->find($finalDocumentId);
+            if (!$finalDocument || !$finalDocument->plan) {
+                abort(404, 'File not found');
+            }
+            $filePath = public_path($finalDocument->plan->path);
             if (!file_exists($filePath)) {
                 abort(404, 'File not found');
             }
@@ -174,8 +186,17 @@ class DocumentController extends Controller
 
     public function viewAddition(Request $request)
     {
-        if ($request->has('addition_path')) {
-            $filePath = public_path($request->input('addition_path'));
+        $additionId = (int) $request->input('addition_id', 0);
+
+        if ($additionId > 0) {
+            $addition = Addition::with('finalDocument')->find($additionId);
+            if (!$addition || !$addition->finalDocument) {
+                abort(404, 'File not found');
+            }
+
+            $this->authorizeFinalDocumentAccess($addition->finalDocument);
+
+            $filePath = public_path($addition->path);
             if (!file_exists($filePath)) {
                 abort(404, 'File not found');
             }
@@ -186,6 +207,21 @@ class DocumentController extends Controller
         }
 
         abort(400, 'Parâmetros em falta');
+    }
+
+    private function authorizeFinalDocumentAccess(?FinalDocument $finalDocument): void
+    {
+        if (!$finalDocument) {
+            abort(404, 'Documento nÃ£o encontrado');
+        }
+
+        if (session('admin')) {
+            return;
+        }
+
+        if ((int) session('user_id') !== (int) $finalDocument->user_id) {
+            abort(403, 'NÃ£o tem permissÃ£o para aceder a este documento.');
+        }
     }
 
     public function downloadDocument(Request $request)

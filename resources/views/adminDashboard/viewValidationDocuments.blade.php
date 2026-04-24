@@ -68,6 +68,7 @@
                 <li class="flex p-2 border-b">
                     <form method="GET" action="{{ route('view-final-document') }}" id="documentForm{{ $document['final_document_id'] }}" class="hidden">
                         <input type="hidden" name="final_document_id" value="{{ $document['final_document_id'] }}">
+                        <input type="hidden" name="document_id" value="{{ $document['document_id'] }}">
                     </form>
                     <div class="flex-grow">
                         <div onclick="document.getElementById('documentForm{{ $document['final_document_id'] }}').submit()"

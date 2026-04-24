@@ -31,20 +31,34 @@ function validateDocument(finalDocumentId, event) {
 
     let response = confirm('Tem a certeza que deseja validar este documento?');
     if (response === true) {
-        document.getElementById('documentValidationForm' + finalDocumentId).submit();
+        const form = document.getElementById('documentValidationForm' + finalDocumentId);
+        if (!form) {
+            alert('Não foi possível submeter o documento.');
+            return false;
+        }
+
+        form.submit();
     }
     return false;
 }
 
 document.addEventListener('DOMContentLoaded', function () {
     const presidentialEmail = document.getElementById('presidential_email');
+
+    function syncPresidentialEmail(selectedValue) {
+        const hiddenInputs = document.querySelectorAll('.hidden_presidencial_email');
+        hiddenInputs.forEach(function (input) {
+            input.value = selectedValue;
+        });
+    }
+
     if (presidentialEmail) {
+        syncPresidentialEmail(presidentialEmail.value);
         presidentialEmail.addEventListener('input', function () {
-            const selectedValue = this.value;
-            const hiddenInputs = document.querySelectorAll('.hidden_presidencial_email');
-            hiddenInputs.forEach(function (input) {
-                input.value = selectedValue;
-            });
+            syncPresidentialEmail(this.value);
+        });
+        presidentialEmail.addEventListener('change', function () {
+            syncPresidentialEmail(this.value);
         });
     }
 });

@@ -113,7 +113,7 @@ class FormController extends Controller
 
             $planId = $this->processFileUpload($request);
 
-            $finalDocumentId = $this->createFinalDocument($documentId, $userId, $submittedData, $planId, $request->input('status'));
+            $finalDocumentId = $this->createFinalDocument($documentId, $userId, $submittedData, $planId);
 
             if (!$finalDocumentId) {
                 throw new Exception('Falha ao criar documento final');
@@ -165,17 +165,16 @@ class FormController extends Controller
         }
     }
 
-    public function createFinalDocument(int $documentId, int $userId, array $submittedData, ?int $planId = null, ?string $statusOverride = null): int
+    public function createFinalDocument(int $documentId, int $userId, array $submittedData, ?int $planId = null): int
     {
         $docxPath = $this->generateFinalDocx($documentId, $submittedData);
         $pdfPath  = $this->convertToPdf($docxPath);
-        $status   = $statusOverride ?? 'Pendente';
 
         $finalDocument = FinalDocument::create([
             'user_id'     => $userId,
             'pdf_path'    => $pdfPath,
             'document_id' => $documentId,
-            'status'      => $status,
+            'status'      => 'Pendente',
             'plan_id'     => $planId,
         ]);
 
@@ -184,6 +183,44 @@ class FormController extends Controller
         }
 
         return $finalDocument->id;
+    }
+
+    public function regenerateFinalDocumentPdf(FinalDocument $finalDocument): string
+    {
+        $submittedData = $this->buildSubmittedDataFromFinalDocument($finalDocument);
+        $docxPath = $this->generateFinalDocx($finalDocument->document_id, $submittedData);
+        $newPdfPath = $this->convertToPdf($docxPath);
+
+        $oldPdfPath = $finalDocument->pdf_path
+            ? public_path('uploads/generated_docs/' . $finalDocument->pdf_path)
+            : null;
+
+        $finalDocument->update(['pdf_path' => $newPdfPath]);
+
+        if ($oldPdfPath && is_file($oldPdfPath) && basename($oldPdfPath) !== $newPdfPath) {
+            @unlink($oldPdfPath);
+        }
+
+        return $newPdfPath;
+    }
+
+    private function buildSubmittedDataFromFinalDocument(FinalDocument $finalDocument): array
+    {
+        $fieldValues = FieldValue::where('final_document_id', $finalDocument->id)
+            ->join('field', 'field_value.field_id', '=', 'field.id')
+            ->where('field.document_id', $finalDocument->document_id)
+            ->orderBy('field.id')
+            ->get([
+                'field_value.field_id',
+                'field.name as field_name',
+                'field_value.value',
+            ]);
+
+        return [
+            'field_ids'    => $fieldValues->pluck('field_id')->map(fn($id) => (string) $id)->toArray(),
+            'field_names'  => $fieldValues->pluck('field_name')->toArray(),
+            'field_values' => $fieldValues->pluck('value')->map(fn($value) => (string) $value)->toArray(),
+        ];
     }
 
     private function createVariousFieldValues(int $documentId, int $userId, array $formData, int $finalDocumentId): void

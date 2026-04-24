@@ -59,7 +59,10 @@
 
         <input type="hidden" name="document_id" value="{{ $documentId ?? '' }}">
 
-        @php $current_group = 0; @endphp
+        @php
+            $current_group = 0;
+            $na_open = false;
+        @endphp
 
         @foreach($fields as $index => $field)
             @switch($field['data_type'])
@@ -153,18 +156,27 @@
                     @break
 
                 @case('NA start')
+                    @if($na_open)
+                        </div>
+                    </div>
+                    <hr class="my-6 border-gray-300">
+                    @endif
                     <div class="na-toggle-container mt-2">
                         <input type="checkbox"
                             onclick="toggleContent({{ $field['id'] }})"
                             id="na-toggle-{{ $field['id'] }}">
                         <label for="na-toggle-{{ $field['id'] }}">Não aplicável</label>
                         <div id="NA-{{ $field['id'] }}">
+                    @php $na_open = true; @endphp
                     @break
 
                 @case('NA end')
+                    @if($na_open)
                         </div>
                     </div>
                     <hr class="my-6 border-gray-300">
+                        @php $na_open = false; @endphp
+                    @endif
                     @break
 
                 @default
@@ -178,6 +190,12 @@
                         {{ !in_array($field['data_type'], ['checkbox', 'radio']) ? 'required' : '' }}>
             @endswitch
         @endforeach
+
+        @if($na_open)
+            </div>
+        </div>
+        <hr class="my-6 border-gray-300">
+        @endif
 
         <input class="mt-4 hover:bg-blue-600 bg-blue-900 p-2 w-full cursor-pointer text-white" type="submit" value="Submeter" />
         </form>

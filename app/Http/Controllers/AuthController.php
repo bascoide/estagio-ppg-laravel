@@ -64,6 +64,8 @@ class AuthController extends Controller
         $name     = $request->input('name', '');
         $email    = $request->input('email', '');
         $password = $request->input('password', '');
+        $courseTypeId = (int) $request->input('CourseType', 0);
+        $courseId = (int) $request->input('Course', 0);
 
         if (empty($name) || empty($email) || empty($password)) {
             return back()->with('error', 'Email e senha são obrigatórios!');
@@ -71,6 +73,15 @@ class AuthController extends Controller
 
         if (!preg_match('/@iscap\.ipp\.pt$/', $email)) {
             return back()->with('error', 'Apenas emails com domínio @iscap.ipp.pt são permitidos!');
+        }
+
+        $course = Course::where('id', $courseId)
+            ->where('type_course_id', $courseTypeId)
+            ->where('is_active', true)
+            ->first();
+
+        if (!$course) {
+            return back()->with('error', 'Curso invÃ¡lido ou inativo para o tipo de curso selecionado!');
         }
 
         $hashedPassword = Hash::make($password);
@@ -93,7 +104,7 @@ class AuthController extends Controller
                 'email'             => $email,
                 'password'          => $hashedPassword,
                 'admin'             => false,
-                'course_id'         => (int) $request->input('Course'),
+                'course_id'         => $course->id,
                 'verification_code' => $verificationCode,
                 'verified'          => false,
             ]);
@@ -127,7 +138,7 @@ class AuthController extends Controller
             return view('verifyUser')->with('message', 'Conta verificada com sucesso!');
         }
 
-        return view('verifyUser')->with('error', 'Erro ao verificar conta :(');
+        return view('verifyUser')->with('error', 'Erro ao verificar conta.');
     }
 
     public function logout()

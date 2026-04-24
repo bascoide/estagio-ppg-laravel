@@ -33,8 +33,7 @@
                             <form id="documentForm{{ $addition['id'] }}"
                                   action="{{ route('print-addition') }}" method="POST" target="_blank">
                                 @csrf
-                                <input type="hidden" name="document_id" value="{{ $addition['final_document_id'] }}">
-                                <input type="hidden" name="addition_path" value="{{ $addition['addition_path'] ?? '' }}">
+                                <input type="hidden" name="addition_id" value="{{ $addition['id'] }}">
                                 <div onclick="document.getElementById('documentForm{{ $addition['id'] }}').submit()"
                                     class="flex-grow w-full items-start cursor-pointer">
                                     {{ ($addition['name'] ?? '') . ' - ' . date('d/m/Y H:i', strtotime($addition['created_at'] ?? 'now')) }}

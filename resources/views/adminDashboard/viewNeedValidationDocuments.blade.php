@@ -24,9 +24,15 @@
         @if(count($documents) > 0)
             @foreach($documents as $document)
                 <li class="flex p-2 border-b">
+                    <form method="GET" action="{{ route('view-final-document') }}"
+                        id="documentViewForm{{ $document['final_document_id'] }}" class="hidden">
+                        <input type="hidden" name="final_document_id" value="{{ $document['final_document_id'] }}">
+                        <input type="hidden" name="document_id" value="{{ $document['document_id'] }}">
+                    </form>
+
                     <div class="flex-grow">
-                        <div onclick="document.getElementById('documentForm{{ $document['final_document_id'] }}').submit()"
-                            class="flex-grow w-full items-start">
+                        <div onclick="document.getElementById('documentViewForm{{ $document['final_document_id'] }}').submit()"
+                            class="flex-grow w-full items-start cursor-pointer">
                             {{ ($document['name'] ?? '') . ' - ' . date('d/m/Y H:i', strtotime($document['created_at'] ?? 'now')) }}
                         </div>
                         <span class="text-yellow-800">Por validar</span>
@@ -34,15 +40,15 @@
 
                     <div class="flex items-center ml-4 gap-2">
                         <form method="POST" action="{{ route('validate-document') }}"
-                            id="documentForm{{ $document['final_document_id'] }}">
+                            id="documentValidationForm{{ $document['final_document_id'] }}">
                             @csrf
                             <input type="hidden" name="final_document_id" value="{{ $document['final_document_id'] }}">
                             <input type="hidden" name="user_id" value="{{ $document['user_id'] }}">
                             <input type="hidden" name="email" value="{{ $document['email'] }}">
                             <input type="hidden" name="presidencial_email" class="hidden_presidencial_email">
-                            <button class="bg-green-500 text-white rounded p-2 w-10 h-10 cursor-pointer hover:bg-green-600"
+                            <button type="button" class="bg-green-500 text-white rounded p-2 w-10 h-10 cursor-pointer hover:bg-green-600"
                                 onclick="validateDocument({{ $document['final_document_id'] }}, event)">
-                                ✔
+                                &#10004;
                             </button>
                         </form>
 
@@ -52,11 +58,12 @@
                             <input type="hidden" name="final_document_id" value="{{ $document['final_document_id'] }}">
                             <input type="hidden" name="email" value="{{ $document['email'] }}">
                             <input type="hidden" name="rejection_reason" id="rejectionReason{{ $document['final_document_id'] }}" value="">
-                            <button class="bg-red-500 text-white rounded p-2 w-10 cursor-pointer h-10 hover:bg-red-600"
+                            <button type="button" class="bg-red-500 text-white rounded p-2 w-10 cursor-pointer h-10 hover:bg-red-600"
                                 onclick="rejectDocument({{ $document['final_document_id'] }}, event)">
-                                ❌
+                                &#10060;
                             </button>
                         </form>
+
                         <form method="POST" action="{{ route('print-pdf') }}" target="_blank">
                             @csrf
                             <input type="hidden" name="final_document_id" value="{{ $document['final_document_id'] }}">

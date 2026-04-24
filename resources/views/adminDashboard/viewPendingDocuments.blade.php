@@ -25,7 +25,7 @@
                             <form method="POST" action="{{ route('view-plan') }}" target="_blank" class="plan-form">
                                 @csrf
                                 <input type="hidden" name="final_document_id" value="{{ $document['final_document_id'] }}">
-                                <input type="hidden" name="plan_path" value="{{ $document['plan_path'] }}">
+                                <input type="hidden" name="plan_id" value="{{ $document['plan_id'] }}">
                                 <button type="submit" class="bg-green-600 hover:bg-green-700 rounded-lg p-1 mr-2">
                                     <img class="h-10 cursor-pointer" src="{{ asset('images/plan_icon.webp') }}">
                                 </button>
@@ -33,11 +33,10 @@
                         @else
                             <form method="POST" action="{{ route('view-plan') }}" target="_blank" class="plan-form"
                                 id="planForm{{ $document['final_document_id'] }}"
-                                onsubmit="event.preventDefault(); verifyPlan({{ $document['final_document_id'] }}, {{ $document['plan_id'] }}, '{{ $document['plan_path'] }}', this);">
+                                onsubmit="event.preventDefault(); verifyPlan({{ $document['final_document_id'] }}, {{ $document['plan_id'] }}, this);">
                                 @csrf
                                 <input type="hidden" name="final_document_id" value="{{ $document['final_document_id'] }}">
                                 <input type="hidden" name="plan_id" value="{{ $document['plan_id'] }}">
-                                <input type="hidden" name="plan_path" value="{{ $document['plan_path'] }}">
                                 <button type="submit" class="bg-red-600 hover:bg-red-700 rounded-lg p-1 mr-2">
                                     <img class="h-10 cursor-pointer" src="{{ asset('images/plan_icon.webp') }}">
                                 </button>

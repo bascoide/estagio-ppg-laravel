@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\FinalDocument;
+use App\Models\FieldValue;
 use App\Models\User;
 use Exception;
 use Illuminate\Http\Request;
@@ -68,13 +69,26 @@ class UserUploadFinalDocumentController extends Controller
         $filename   = uniqid() . '_' . $file->getClientOriginalName();
         $file->move($uploadDir, $filename);
 
-        FinalDocument::create([
+        $newFinalDocument = FinalDocument::create([
             'user_id'     => $oldFinalDocument->user_id,
             'pdf_path'    => $filename,
             'document_id' => $oldFinalDocument->document_id,
             'status'      => 'Por validar',
             'plan_id'     => $oldFinalDocument->plan_id,
         ]);
+
+        $existingFieldValues = FieldValue::where('final_document_id', $oldFinalDocument->id)->get();
+        if ($newFinalDocument && $existingFieldValues->isNotEmpty()) {
+            FieldValue::insert($existingFieldValues->map(function ($fieldValue) use ($newFinalDocument) {
+                return [
+                    'document_id'       => $fieldValue->document_id,
+                    'user_id'           => $fieldValue->user_id,
+                    'field_id'          => $fieldValue->field_id,
+                    'value'             => $fieldValue->value,
+                    'final_document_id' => $newFinalDocument->id,
+                ];
+            })->toArray());
+        }
 
         return redirect('/user-upload-final-document-form')->with('message', 'Upload realizado com sucesso!');
     }

@@ -258,12 +258,27 @@ class ProfessorController extends Controller
         }
 
         $teacherName = $request->input('teacher_name');
+        $professorId = (int) $request->input('professor_id', 0);
+
+        $latestDocuments = \DB::table('final_document')
+            ->selectRaw('MAX(id) as latest_id')
+            ->groupBy('user_id', 'document_id', 'plan_id');
 
         $documents = \DB::table('final_document')
+            ->joinSub($latestDocuments, 'latest_documents', function ($join) {
+                $join->on('final_document.id', '=', 'latest_documents.latest_id');
+            })
             ->join('user', 'final_document.user_id', '=', 'user.id')
-            ->join('professor_course', 'professor_course.intern_id', '=', 'user.id')
+            ->join('professor_course', function ($join) {
+                $join->on('professor_course.intern_id', '=', 'user.id')
+                    ->on('professor_course.course_id', '=', 'user.course_id');
+            })
             ->join('professor', 'professor_course.professor_id', '=', 'professor.id')
-            ->where('professor.name', $teacherName)
+            ->when($professorId > 0, function ($query) use ($professorId) {
+                $query->where('professor.id', $professorId);
+            }, function ($query) use ($teacherName) {
+                $query->where('professor.name', $teacherName);
+            })
             ->whereIn('final_document.status', ['Aceite', 'Validado'])
             ->select(
                 'final_document.status',
@@ -271,6 +286,8 @@ class ProfessorController extends Controller
                 'user.name as student_name',
                 'user.email'
             )
+            ->distinct()
+            ->orderBy('user.name')
             ->get()
             ->toArray();
 

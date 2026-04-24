@@ -1,4 +1,4 @@
-function verifyPlan(finalDocumentId, planId, planPath, formElement) {
+function verifyPlan(finalDocumentId, planId, formElement) {
     // Mostrar status de carregamento
     const button = formElement.querySelector('button[type="submit"]');
     button.disabled = true;
@@ -15,8 +15,7 @@ function verifyPlan(finalDocumentId, planId, planPath, formElement) {
         },
         body: new URLSearchParams({
             'final_document_id': finalDocumentId,
-            'plan_id': planId,
-            'plan_path': planPath
+            'plan_id': planId
         })
     })
         .then( async response => {
@@ -37,7 +36,7 @@ function verifyPlan(finalDocumentId, planId, planPath, formElement) {
             const newFormHTML = `
             <form method="POST" action="view-plan" target="_blank" class="plan-form">
                 <input type="hidden" name="final_document_id" value="${finalDocumentId}">
-                <input type="hidden" name="plan_path" value="${planPath}">
+                <input type="hidden" name="plan_id" value="${planId}">
                 <button type="submit" class="bg-green-600 hover:bg-green-700 rounded-lg p-1 mr-2">
                     <img class="h-10 cursor-pointer" src="/images/plan_icon.webp">
                 </button>
