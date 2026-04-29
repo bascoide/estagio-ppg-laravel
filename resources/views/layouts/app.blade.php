@@ -7,7 +7,7 @@
     <meta name="author" content="Simão Pedro Carvalho Ferreira">
     <link href="{{ asset('output.css') }}" rel="stylesheet">
     <title>PPG</title>
-    <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
+    <link rel="icon" type="image/x-png" href="{{ asset('favicon.png') }}">
 </head>
 <body class="">
     <div class="flex p-5 bg-gray-200">

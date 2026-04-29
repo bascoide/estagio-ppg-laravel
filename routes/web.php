@@ -25,7 +25,7 @@ Route::post('/user-upload-final-document',      [UserUploadFinalDocumentControll
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // Authenticated user routes
-Route::middleware(['auth.custom'])->group(function () {
+Route::middleware(['auth.custom', 'no.cache'])->group(function () {
     Route::get('/guia-form',   [FormController::class, 'index'])->name('guia-form');
     Route::get('/form',        [FormController::class, 'form'])->name('form');
     Route::get('/get-form',    [FormController::class, 'generateForm'])->name('get-form');
@@ -39,7 +39,7 @@ Route::middleware(['auth.custom'])->group(function () {
 });
 
 // Admin routes
-Route::middleware(['admin'])->group(function () {
+Route::middleware(['admin', 'no.cache'])->group(function () {
     Route::get('/view-pending-documents',   [AdminPanelController::class, 'viewPendingDocuments'])->name('view-pending-documents');
     Route::get('/need-validation-documents', [AdminPanelController::class, 'viewNeedValidationDocuments'])->name('need-validation-documents');
     Route::get('/view-validation-documents', [AdminPanelController::class, 'viewValidationDocuments'])->name('view-validation-documents');

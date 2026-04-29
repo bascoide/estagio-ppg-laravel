@@ -141,9 +141,11 @@ class AuthController extends Controller
         return view('verifyUser')->with('error', 'Erro ao verificar conta.');
     }
 
-    public function logout()
+    public function logout(Request $request)
     {
-        session()->flush();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
         return redirect('/login');
     }
 
