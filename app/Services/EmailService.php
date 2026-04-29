@@ -153,7 +153,7 @@ class EmailService
                                 ' . $buttonHtml . '
                                 <tr>
                                     <td style="padding: 24px 32px 32px 32px; font-size: 14px; line-height: 1.7; color: #4b5563;">
-                                        <p style="margin: 0;">Saudacoes academicas,</p>
+                                        <p style="margin: 0;">Saudações académicas.</p>
                                         <p style="margin: 4px 0 0 0;"><strong>Equipa de Atendimento</strong><br>ISCAP</p>
                                     </td>
                                 </tr>
@@ -193,13 +193,13 @@ class EmailService
         $fullUrl = url('/user-verification') . '?email=' . urlencode($userEmail) . '&verification_code=' . urlencode($verificationCode);
 
         $html = $this->renderEmailTemplate(
-            'Portal de Estagios',
-            'Verificacao da sua conta',
-            '<p style="margin: 0 0 14px 0;">Para concluir o registo, confirme a sua conta atraves do link abaixo.</p>
-             <p style="margin: 0;">Se nao solicitou este registo, pode ignorar esta mensagem.</p>',
+            'Portal de Estágios',
+            'Verificação da sua conta',
+            '<p style="margin: 0 0 14px 0;">Para concluir o registo, confirme a sua conta através do link abaixo.</p>
+             <p style="margin: 0;">Se não solicitou este registo, pode ignorar esta mensagem.</p>',
             'Confirmar conta',
             $fullUrl,
-            'Verificacao',
+            'Verificação',
             'blue'
         );
 
@@ -217,11 +217,11 @@ class EmailService
         $fullUrl = url('/user-upload-final-document-form') . '?final_document_id=' . $finalDocumentId;
 
         $html = $this->renderEmailTemplate(
-            'Gestao de Protocolos',
+            'Gestão de Protocolos',
             'Protocolo aprovado',
             '<p style="margin: 0 0 14px 0;">O seu protocolo foi <strong>aprovado</strong> e processado com sucesso.</p>
-             <p style="margin: 0 0 14px 0;">Solicite agora as assinaturas necessarias para a finalizacao do documento.</p>
-             <p style="margin: 0;">O ficheiro segue em anexo para referencia.</p>',
+             <p style="margin: 0 0 14px 0;">Solicite agora as assinaturas necessárias para a finalização do documento.</p>
+             <p style="margin: 0;">O ficheiro segue em anexo para referência.</p>',
             'Submeter documento assinado',
             $fullUrl,
             'Aprovado',
@@ -245,12 +245,12 @@ class EmailService
             : '';
 
         $html = $this->renderEmailTemplate(
-            'Gestao de Protocolos',
+            'Gestão de Protocolos',
             'Protocolo rejeitado',
             '<p style="margin: 0 0 14px 0;">O seu protocolo foi <strong>rejeitado</strong>.</p>' .
             $reasonHtml .
             $this->renderRejectedFields($rejectedFields) .
-            '<p style="margin: 14px 0 0 0;">O documento segue em anexo para sua referencia.</p>',
+            '<p style="margin: 14px 0 0 0;">O documento segue em anexo para sua referência.</p>',
             'Transferir documento',
             $downloadUrl,
             'Rejeitado',
@@ -289,7 +289,7 @@ class EmailService
         if (!file_exists($pdfPath)) return false;
 
         $html = $this->renderEmailTemplate(
-            'Gestao de Protocolos',
+            'Gestão de Protocolos',
             'Protocolo invalidado',
             '<p style="margin: 0 0 14px 0;">O seu protocolo foi <strong>invalidado</strong>.</p>' .
             (!empty($rejectionReason) ? '<p style="margin: 0 0 14px 0;"><strong>Motivo:</strong> ' . htmlspecialchars($rejectionReason) . '</p>' : '') .
@@ -316,11 +316,11 @@ class EmailService
         $fullUrl = url('/president-upload-final-document-form') . '?uuid=' . $uuid;
 
         $html = $this->renderEmailTemplate(
-            'Validacao Presidencial',
+            'Validação Presidencial',
             'Assinatura pendente do protocolo',
             '<p style="margin: 0 0 14px 0;">Em anexo encontra o protocolo para assinatura.</p>
-             <p style="margin: 0 0 14px 0;">Depois de assinar, submeta o documento final atraves do botao abaixo.</p>
-             <p style="margin: 0;"><strong>Responsavel pelo envio:</strong> ' . htmlspecialchars($adminName) . '</p>',
+             <p style="margin: 0 0 14px 0;">Depois de assinar, submeta o documento final atraves do botão abaixo.</p>
+             <p style="margin: 0;"><strong>Responsável pelo envio:</strong> ' . htmlspecialchars($adminName) . '</p>',
             'Submeter protocolo assinado',
             $fullUrl,
             'Pendente',
@@ -339,7 +339,7 @@ class EmailService
         if (!file_exists($pdfPath)) return false;
 
         $html = $this->renderEmailTemplate(
-            'Gestao de Protocolos',
+            'Gestão de Protocolos',
             'Protocolo validado',
             '<p style="margin: 0 0 14px 0;">O seu protocolo foi <strong>aprovado</strong> e finalizado com sucesso.</p>
              <p style="margin: 0;">O documento final segue em anexo para consulta.</p>',
@@ -361,17 +361,17 @@ class EmailService
         if (!file_exists($pdfPath)) return false;
 
         $html = $this->renderEmailTemplate(
-            'Gestao de Protocolos',
+            'Gestão de Protocolos',
             'Protocolo anulado',
             '<p style="margin: 0 0 14px 0;">O seu protocolo foi <strong>anulado</strong>.</p>
-             <p style="margin: 0;">Esta acao foi registada conforme solicitado.</p>',
+             <p style="margin: 0;">Esta ação foi registada conforme solicitado.</p>',
             null,
             null,
             'Anulado',
             'gray'
         );
 
-        return $this->send($userEmail, 'O Seu Protocolo foi anulado', $html, true, [$pdfPath], $this->config['from_email']);
+        return $this->send($userEmail, 'O Seu Protocolo foi Anulado', $html, true, [$pdfPath], $this->config['from_email']);
     }
 
     public function sendPlanEmail(string $userEmail, int $finalDocumentId): bool
@@ -385,11 +385,11 @@ class EmailService
         $fullUrl = url('/form') . '?filled_plan_id=' . $finalDocumentId;
 
         $html = $this->renderEmailTemplate(
-            'Gestao de Planos',
+            'Gestão de Planos',
             'Plano pendente',
             '<p style="margin: 0 0 14px 0;">O seu plano encontra-se <strong>pendente</strong>.</p>
-             <p style="margin: 0 0 14px 0;">Solicite as assinaturas necessarias para finalizar o documento.</p>
-             <p style="margin: 0;">O ficheiro segue em anexo para referencia.</p>',
+             <p style="margin: 0 0 14px 0;">Solicite as assinaturas necessárias para finalizar o documento.</p>
+             <p style="margin: 0;">O ficheiro segue em anexo para referência.</p>',
             'Submeter plano assinado',
             $fullUrl,
             'Pendente',
