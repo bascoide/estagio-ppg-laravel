@@ -4,7 +4,7 @@
 <div class="max-w-3xl w-full p-10 bg-white mt-10 shadow-lg mx-10 mb-10">
     <h3 class="bold text-2xl">Upload</h3>
 
-    @if(!isset($uuid))
+    @if(empty($uuid))
         @if(!session('message') && !session('error'))
             @php session()->flash('error', 'Nenhum documento foi encontrado'); @endphp
         @endif

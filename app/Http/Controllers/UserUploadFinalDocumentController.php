@@ -15,6 +15,13 @@ class UserUploadFinalDocumentController extends Controller
     public function index(Request $request)
     {
         $finalDocumentId = (int) $request->query('final_document_id', 0);
+        $finalDocument = FinalDocument::find($finalDocumentId);
+
+        if (!$finalDocument || !$this->canReceiveSignedDocument($finalDocument)) {
+            return view('userUploadFinalDocument', [
+                'finalDocumentId' => null,
+            ])->with('error', 'Este documento nao esta disponivel para submissao final.');
+        }
 
         return view('userUploadFinalDocument', [
             'finalDocumentId' => $finalDocumentId
@@ -39,6 +46,11 @@ class UserUploadFinalDocumentController extends Controller
         $oldFinalDocument = FinalDocument::find($finalDocumentId);
         if (!$oldFinalDocument) {
             return redirect('/user-upload-final-document-form')->with('error', 'Documento não encontrado.');
+        }
+
+        if (!$this->canReceiveSignedDocument($oldFinalDocument)) {
+            return redirect('/user-upload-final-document-form?final_document_id=' . $finalDocumentId)
+                ->with('error', 'Este documento nao esta disponivel para submissao final.');
         }
 
         // Autenticar utilizador com email+password
@@ -90,5 +102,10 @@ class UserUploadFinalDocumentController extends Controller
         }
 
         return redirect('/user-upload-final-document-form')->with('message', 'Upload realizado com sucesso!');
+    }
+
+    private function canReceiveSignedDocument(FinalDocument $finalDocument): bool
+    {
+        return $finalDocument->status === 'Aceite';
     }
 }

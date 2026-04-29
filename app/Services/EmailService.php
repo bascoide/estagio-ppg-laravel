@@ -53,8 +53,16 @@ class EmailService
                 $mail->addReplyTo($replyTo);
             }
 
-            foreach ($attachments as $filePath) {
-                $mail->addAttachment($filePath);
+            foreach ($attachments as $attachment) {
+                $filePath = is_array($attachment) ? ($attachment['path'] ?? '') : $attachment;
+                $fileName = is_array($attachment) ? ($attachment['name'] ?? basename($filePath)) : basename($filePath);
+
+                if (!is_string($filePath) || !is_file($filePath) || !is_readable($filePath)) {
+                    \Log::error('Email attachment not readable: ' . (string) $filePath);
+                    return false;
+                }
+
+                $mail->addAttachment($filePath, $fileName);
             }
 
             $mail->isHTML($isHtml);
@@ -228,8 +236,9 @@ class EmailService
         $document = FinalDocument::find($finalDocumentId);
         if (!$document) return false;
 
-        $pdfPath = public_path('uploads/generated_docs/' . $document->pdf_path);
-        if (!file_exists($pdfPath)) return false;
+        $attachment = $this->finalDocumentAttachment($document);
+        if (!$attachment) return false;
+        $downloadUrl = asset('uploads/generated_docs/' . basename($document->pdf_path));
 
         $reasonHtml = !empty($rejectionReason)
             ? '<p style="margin: 0 0 14px 0;"><strong>Motivo:</strong> ' . htmlspecialchars($rejectionReason) . '</p>'
@@ -242,13 +251,33 @@ class EmailService
             $reasonHtml .
             $this->renderRejectedFields($rejectedFields) .
             '<p style="margin: 14px 0 0 0;">O documento segue em anexo para sua referencia.</p>',
-            null,
-            null,
+            'Transferir documento',
+            $downloadUrl,
             'Rejeitado',
             'red'
         );
 
-        return $this->send($userEmail, 'O Seu Protocolo foi Rejeitado', $html, true, [$pdfPath], $this->config['from_email']);
+        return $this->send($userEmail, 'O Seu Protocolo foi Rejeitado', $html, true, [$attachment], $this->config['from_email']);
+    }
+
+    private function finalDocumentAttachment(FinalDocument $document): ?array
+    {
+        if (!$document->pdf_path) {
+            return null;
+        }
+
+        $fileName = basename($document->pdf_path);
+        $pdfPath = public_path('uploads/generated_docs/' . $fileName);
+
+        if (!is_file($pdfPath) || !is_readable($pdfPath)) {
+            \Log::error('Final document attachment missing: ' . $pdfPath);
+            return null;
+        }
+
+        return [
+            'path' => $pdfPath,
+            'name' => 'protocolo_' . $document->id . '.' . pathinfo($fileName, PATHINFO_EXTENSION),
+        ];
     }
 
     public function sendRejectedValidationEmail(string $userEmail, int $finalDocumentId, string $rejectionReason = ''): bool
