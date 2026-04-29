@@ -10,6 +10,7 @@ use App\Models\SubmittedPlan;
 use App\Models\TypeCourse;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use ZipArchive;
 
 class DocumentController extends Controller
@@ -162,19 +163,23 @@ class DocumentController extends Controller
         $planId = (int) $request->input('plan_id', 0);
         $finalDocumentId = (int) $request->input('final_document_id', 0);
 
-        if ($planId > 0) {
-            \DB::table('submitted_plans')->where('id', $planId)->update(['verified' => true]);
-        }
-
         if ($finalDocumentId > 0) {
             $finalDocument = FinalDocument::with('plan')->find($finalDocumentId);
             if (!$finalDocument || !$finalDocument->plan) {
                 abort(404, 'File not found');
             }
+
+            if ($planId <= 0 || $planId !== (int) $finalDocument->plan_id) {
+                abort(400, 'Plano invalido');
+            }
+
             $filePath = public_path($finalDocument->plan->path);
             if (!file_exists($filePath)) {
                 abort(404, 'File not found');
             }
+
+            DB::table('submitted_plans')->where('id', $finalDocument->plan_id)->update(['verified' => true]);
+
             return response()->file($filePath, [
                 'Content-Type' => 'application/pdf',
                 'Content-Disposition' => 'inline; filename="' . basename($filePath) . '"',
@@ -255,6 +260,8 @@ class DocumentController extends Controller
 
     public function createNewDocumentAndFields(Request $request)
     {
+        $targetPath = null;
+
         $selectedCourseTypes = $request->input('courseTypes', []);
         if (empty($selectedCourseTypes)) {
             session()->flash('error', 'Selecione pelo menos um tipo de curso!');
@@ -272,7 +279,13 @@ class DocumentController extends Controller
                 throw new Exception('Falha ao criar diretório de upload');
             }
 
-            $documentName = $request->input('documentName');
+            foreach ($selectedCourseTypes as $typeId) {
+                if (!TypeCourse::find($typeId)) {
+                    throw new Exception('Tipo de curso com ID ' . $typeId . ' nao encontrado!');
+                }
+            }
+
+            $documentName = trim((string) $request->input('documentName'));
             $documentType = $request->input('documentType');
             $file = $request->file('documentFile');
 
@@ -288,24 +301,25 @@ class DocumentController extends Controller
                 throw new Exception('Apenas ficheiros .docx permitidos!');
             }
 
-            $fileName = $documentName . '.docx';
+            $fileName = $this->sanitizeDocumentFileName($documentName);
             $targetPath = $uploadDir . $fileName;
+            if (file_exists($targetPath)) {
+                throw new Exception('Ja existe um ficheiro com esse nome.');
+            }
+
             $file->move($uploadDir, $fileName);
 
-            // Create document in DB
-            $documentId = \DB::table('document')->insertGetId([
+            DB::beginTransaction();
+
+            $documentId = DB::table('document')->insertGetId([
                 'docx_path' => $fileName,
                 'name'      => $documentName,
                 'type'      => $documentType,
                 'is_active' => true,
             ]);
 
-            // Attach course types (pivot)
             foreach ($selectedCourseTypes as $typeId) {
-                if (!TypeCourse::find($typeId)) {
-                    throw new Exception('Tipo de curso com ID ' . $typeId . ' não encontrado!');
-                }
-                \DB::table('document_type_course')->insert([
+                DB::table('document_type_course')->insert([
                     'document_id'    => $documentId,
                     'type_course_id' => $typeId,
                 ]);
@@ -313,13 +327,44 @@ class DocumentController extends Controller
 
             $this->extractAndProcessDocument($targetPath, $documentId);
 
+            DB::commit();
             (new LogsController())->logAction('upload-document');
             session()->flash('message', 'Documento carregado com sucesso!');
         } catch (Exception $e) {
+            if (DB::transactionLevel() > 0) {
+                DB::rollBack();
+            }
+
+            if ($targetPath && is_file($targetPath)) {
+                @unlink($targetPath);
+            }
+
             session()->flash('error', $e->getMessage());
         }
 
         return redirect()->route('upload-document-form');
+    }
+
+    private function sanitizeDocumentFileName(string $documentName): string
+    {
+        $baseName = preg_replace('/[^A-Za-z0-9._ -]/', '_', $documentName) ?? '';
+        $baseName = trim($baseName, " ._\t\n\r\0\x0B");
+
+        if ($baseName === '') {
+            throw new Exception('Nome do documento invalido.');
+        }
+
+        $reservedNames = [
+            'CON', 'PRN', 'AUX', 'NUL',
+            'COM1', 'COM2', 'COM3', 'COM4', 'COM5', 'COM6', 'COM7', 'COM8', 'COM9',
+            'LPT1', 'LPT2', 'LPT3', 'LPT4', 'LPT5', 'LPT6', 'LPT7', 'LPT8', 'LPT9',
+        ];
+
+        if (in_array(strtoupper($baseName), $reservedNames, true)) {
+            throw new Exception('Nome do documento invalido.');
+        }
+
+        return $baseName . '.docx';
     }
 
     private function extractAndProcessDocument(string $filePath, int $documentId): void

@@ -30,9 +30,14 @@ class FormController extends Controller
             ->select('course.*')
             ->first();
 
+        if (!$userCourse) {
+            return redirect('/guia-form')->with('error', 'Curso do utilizador nÃ£o encontrado.');
+        }
+
         $typeCourseId = $userCourse->type_course_id;
         $documents = Document::join('document_type_course', 'document.id', '=', 'document_type_course.document_id')
             ->where('document_type_course.type_course_id', $typeCourseId)
+            ->where('document.is_active', true)
             ->select('document.*')
             ->get()
             ->toArray();
@@ -68,6 +73,10 @@ class FormController extends Controller
             ->select('course.*')
             ->first();
 
+        if (!$userCourse) {
+            return redirect('/form')->with('error', 'Curso do utilizador nÃ£o encontrado.');
+        }
+
         $typeCourseId = $userCourse->type_course_id;
         $userCourseName = $userCourse->name;
         $courseId = $userCourse->id;
@@ -81,6 +90,7 @@ class FormController extends Controller
 
         $documents = Document::join('document_type_course', 'document.id', '=', 'document_type_course.document_id')
             ->where('document_type_course.type_course_id', $typeCourseId)
+            ->where('document.is_active', true)
             ->select('document.*')
             ->get()
             ->toArray();
@@ -89,6 +99,10 @@ class FormController extends Controller
 
         if (!$documentId || $documentId <= 0) {
             return redirect('/form');
+        }
+
+        if (!$this->isDocumentAvailableForTypeCourse($documentId, $typeCourseId)) {
+            return redirect('/form')->with('error', 'Documento invalido ou indisponivel para o seu curso.');
         }
 
         $fields = Field::where('document_id', $documentId)->get()->toArray();
@@ -105,6 +119,19 @@ class FormController extends Controller
 
         try {
             $userId = (int) session('user_id');
+            $userCourse = Course::join('user', 'user.course_id', '=', 'course.id')
+                ->where('user.id', $userId)
+                ->select('course.*')
+                ->first();
+
+            if (!$userCourse) {
+                throw new Exception('Curso do utilizador nao encontrado.');
+            }
+
+            if (!$this->isDocumentAvailableForTypeCourse($documentId, (int) $userCourse->type_course_id)) {
+                throw new Exception('Documento invalido ou indisponivel para o seu curso.');
+            }
+
             $submittedData = [
                 'field_ids'    => $request->input('field_ids', []),
                 'field_names'  => $request->input('field_names', []),
@@ -229,11 +256,24 @@ class FormController extends Controller
             return;
         }
 
+        if (count($formData['field_ids']) !== count($formData['field_values'])) {
+            throw new Exception('Dados do formulario invalidos.');
+        }
+
         $fieldData = array_combine($formData['field_ids'], $formData['field_values']);
         if ($fieldData === false) return;
 
+        $validFieldIds = Field::where('document_id', $documentId)
+            ->pluck('id')
+            ->map(fn($id) => (int) $id)
+            ->toArray();
+
         $records = [];
         foreach ($fieldData as $fieldId => $value) {
+            if (!in_array((int) $fieldId, $validFieldIds, true)) {
+                throw new Exception('Campo invalido para o documento selecionado.');
+            }
+
             $records[] = [
                 'document_id'       => $documentId,
                 'user_id'           => $userId,
@@ -244,6 +284,15 @@ class FormController extends Controller
         }
 
         FieldValue::insert($records);
+    }
+
+    private function isDocumentAvailableForTypeCourse(int $documentId, int $typeCourseId): bool
+    {
+        return Document::join('document_type_course', 'document.id', '=', 'document_type_course.document_id')
+            ->where('document.id', $documentId)
+            ->where('document.is_active', true)
+            ->where('document_type_course.type_course_id', $typeCourseId)
+            ->exists();
     }
 
     private function generateFinalDocx(int $documentId, array $submittedValues): string
@@ -372,9 +421,14 @@ class FormController extends Controller
 
                 foreach ($submittedValues['field_names'] as $index => $submittedName) {
                     if (trim($submittedName) === $fieldName && isset($submittedValues['field_values'][$index])) {
-                        $value = $submittedValues['field_values'][$index];
-                        if ($value === 'true')  $value = '☒';
-                        if ($value === 'false') $value = '☐';
+                        $value = (string) $submittedValues['field_values'][$index];
+                        if ($value === 'true') {
+                            $value = '☒';
+                        } elseif ($value === 'false') {
+                            $value = '☐';
+                        } else {
+                            $value = htmlspecialchars($value, ENT_XML1 | ENT_COMPAT, 'UTF-8');
+                        }
 
                         $processedXml = str_replace($fullPlaceholder, $value, $processedXml, $count);
                         $replaceCount += $count;

@@ -28,7 +28,7 @@ class LogsController extends Controller
         $totalPages   = max(1, (int) ceil($totalRecords / $itemsPerPage));
 
         if ($currentPage > $totalPages && $totalPages > 0) {
-            return redirect()->route('admin.logs', ['page' => $totalPages]);
+            return redirect()->route('admin-logs', ['page' => $totalPages]);
         }
 
         $logs         = $query->orderByDesc('logs.created_at')->offset($offset)->limit($itemsPerPage)->get()->toArray();

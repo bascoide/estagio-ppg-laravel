@@ -106,11 +106,10 @@
                         </div>
                     @endif
                 </div>
-                <button type="button"
-                    class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded mr-2 cursor-pointer"
-                    onclick="history.go(-1)">
+                <a href="{{ $returnUrl ?? route('view-pending-documents') }}"
+                    class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded mr-2 cursor-pointer">
                     Voltar
-                </button>
+                </a>
                 <input type="hidden" name="email" value="{{ $userEmail }}">
                 <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer {{ in_array($status, ['Inativo', 'Aceite', 'Recusado', 'Validado']) ? 'hidden' : '' }}">
                     Guardar Alterações

@@ -83,6 +83,10 @@ class AdminPanelController extends Controller
         }
 
         $finalDocument = FinalDocument::find($finalDocumentId);
+        if (!$finalDocument) {
+            return redirect('/show-documents')->with('error', 'Documento nÃ£o encontrado');
+        }
+
         $status        = $finalDocument->status;
         $userId        = $finalDocument->user_id;
         $planId        = $finalDocument->plan_id;
@@ -117,11 +121,21 @@ class AdminPanelController extends Controller
             }
         }
 
+        $previousUrl = url()->previous();
+        if (
+            $previousUrl !== $request->fullUrl()
+            && !str_contains($previousUrl, '/edit-document')
+            && !str_contains($previousUrl, '/view-final-document')
+        ) {
+            session(['document_return_url' => $previousUrl]);
+        }
+
         session(['previous_page' => $request->fullUrl()]);
+        $returnUrl = session('document_return_url', route('view-pending-documents'));
 
         return view('adminDashboard.viewUserDocument', compact(
             'finalDocumentId', 'documentId', 'status', 'userId', 'planId',
-            'teachers', 'fieldNames', 'fieldValues', 'userEmail'
+            'teachers', 'fieldNames', 'fieldValues', 'userEmail', 'returnUrl'
         ));
     }
 
@@ -176,7 +190,7 @@ class AdminPanelController extends Controller
         $totalPages   = max(1, (int) ceil($totalRecords / $itemsPerPage));
 
         if ($currentPage > $totalPages && $totalPages > 0) {
-            return redirect()->withQueryString()->with('page', $totalPages);
+            return redirect()->to($request->fullUrlWithQuery(['page' => $totalPages]));
         }
 
         $startRecord = $offset + 1;
@@ -195,11 +209,11 @@ class AdminPanelController extends Controller
 
         $documents          = $this->getDocumentsWithStatus('Por validar', $offset, $itemsPerPage);
         $presidencialEmails = PresidentEmail::all()->toArray();
-        $totalRecords       = FinalDocument::where('status', 'Por validar')->count();
+        $totalRecords       = $this->countDocumentsWithStatus('Por validar');
         $totalPages         = max(1, (int) ceil($totalRecords / $itemsPerPage));
 
         if ($currentPage > $totalPages && $totalPages > 0) {
-            return redirect()->withQueryString()->with('page', $totalPages);
+            return redirect()->to($request->fullUrlWithQuery(['page' => $totalPages]));
         }
 
         $startRecord = $offset + 1;
@@ -225,7 +239,8 @@ class AdminPanelController extends Controller
                 $protocolCount = FinalDocument::join('user', 'final_document.user_id', '=', 'user.id')
                     ->where('user.course_id', (int) $request->query('course_id'))
                     ->where('final_document.status', 'Validado')
-                    ->whereBetween('final_document.created_at', [$yearParts[0] . '-09-01', $yearParts[1] . '-08-31'])
+                    ->whereDate('final_document.created_at', '>=', $yearParts[0] . '-09-01')
+                    ->whereDate('final_document.created_at', '<=', $yearParts[1] . '-08-31')
                     ->count();
             } else {
                 return redirect('/view-validation-documents')->with('error', 'Ano escolar inválido');
@@ -235,7 +250,8 @@ class AdminPanelController extends Controller
             $protocolCount = FinalDocument::join('user', 'final_document.user_id', '=', 'user.id')
                 ->where('user.course_id', (int) $request->query('course_id'))
                 ->where('final_document.status', 'Validado')
-                ->whereBetween('final_document.created_at', [$year . '-01-01', $year . '-12-31'])
+                ->whereDate('final_document.created_at', '>=', $year . '-01-01')
+                ->whereDate('final_document.created_at', '<=', $year . '-12-31')
                 ->count();
         }
 
@@ -302,8 +318,11 @@ class AdminPanelController extends Controller
 
         $courses      = Course::with('typeCourse')->get()->toArray();
         $totalQuery = FinalDocument::join('user', 'final_document.user_id', '=', 'user.id')
+            ->join('document', 'final_document.document_id', '=', 'document.id')
             ->where('final_document.status', 'Validado')
-            ->whereBetween('final_document.created_at', [$startDate, $endDate]);
+            ->where('document.type', '!=', 'Plano')
+            ->whereDate('final_document.created_at', '>=', $startDate)
+            ->whereDate('final_document.created_at', '<=', $endDate);
         
         if ($courseId !== null) {
             $totalQuery->where('user.course_id', $courseId);
@@ -313,7 +332,7 @@ class AdminPanelController extends Controller
         $totalPages   = max(1, (int) ceil($totalRecords / $itemsPerPage));
 
         if ($currentPage > $totalPages && $totalPages > 0) {
-            return redirect()->withQueryString()->with('page', $totalPages);
+            return redirect()->to($request->fullUrlWithQuery(['page' => $totalPages]));
         }
 
         $startRecord = $offset + 1;
@@ -334,6 +353,11 @@ class AdminPanelController extends Controller
     {
         if ($request->hasFile('documentFile')) {
             try {
+                $finalDocumentId = (int) $request->input('final_document_id');
+                if (!FinalDocument::find($finalDocumentId)) {
+                    throw new Exception('Documento final nao encontrado');
+                }
+
                 $file = $request->file('documentFile');
                 if ($file->getMimeType() !== 'application/pdf') {
                     throw new Exception('Apenas PDFs são permitidos');
@@ -345,7 +369,6 @@ class AdminPanelController extends Controller
                 $filename = uniqid('addition_') . '.pdf';
                 $file->move($uploadDir, $filename);
 
-                $finalDocumentId = (int) $request->input('final_document_id');
                 $additionName    = $request->input('addition_name', 'Adicionamento');
 
                 \App\Models\Addition::create([
@@ -434,6 +457,10 @@ class AdminPanelController extends Controller
 
                 DB::commit();
                 (new LogsController())->logAction('edit-document', $finalDocumentId);
+                if (in_array($status, ['Aceite', 'Recusado'], true)) {
+                    return redirect(session('document_return_url', route('view-pending-documents')))
+                        ->with('message', 'Status atualizado com sucesso!');
+                }
                 return back()->with('message', 'Status atualizado com sucesso!');
             }
 
@@ -467,6 +494,10 @@ class AdminPanelController extends Controller
 
             DB::commit();
             (new LogsController())->logAction('edit-document', $finalDocumentId);
+            if (in_array($status, ['Aceite', 'Recusado'], true)) {
+                return redirect(session('document_return_url', route('view-pending-documents')))
+                    ->with('message', 'Documento atualizado com sucesso!');
+            }
             return back()->with('message', 'Documento atualizado com sucesso!');
         } catch (Exception $e) {
             if (DB::transactionLevel() > 0) {
@@ -584,6 +615,26 @@ class AdminPanelController extends Controller
         ]);
     }
 
+    private function countDocumentsWithStatus(string $status, ?string $startDate = null, ?string $endDate = null, ?int $courseId = null): int
+    {
+        $query = DB::table('final_document')
+            ->join('user', 'final_document.user_id', '=', 'user.id')
+            ->join('document', 'final_document.document_id', '=', 'document.id')
+            ->where('final_document.status', $status)
+            ->where('document.type', '!=', 'Plano');
+
+        if ($startDate && $endDate) {
+            $query->whereDate('final_document.created_at', '>=', $startDate)
+                ->whereDate('final_document.created_at', '<=', $endDate);
+        }
+
+        if ($courseId !== null) {
+            $query->where('user.course_id', $courseId);
+        }
+
+        return $query->count();
+    }
+
     private function getDocumentsWithStatus(string $status, int $offset, int $limit, ?string $startDate = null, ?string $endDate = null, ?int $courseId = null): array
     {
         $query = DB::table('final_document')
@@ -600,14 +651,20 @@ class AdminPanelController extends Controller
             );
 
         if ($startDate && $endDate) {
-            $query->whereBetween('final_document.created_at', [$startDate, $endDate]);
+            $query->whereDate('final_document.created_at', '>=', $startDate)
+                ->whereDate('final_document.created_at', '<=', $endDate);
         }
 
         if ($courseId !== null) {
             $query->where('user.course_id', $courseId);
         }
 
-        $results = $query->limit($limit)->offset($offset)->get();
+        $results = $query
+            ->orderByDesc('final_document.created_at')
+            ->orderByDesc('final_document.id')
+            ->limit($limit)
+            ->offset($offset)
+            ->get();
         
         // Converter os resultados para arrays
         return $results->map(function($item) {

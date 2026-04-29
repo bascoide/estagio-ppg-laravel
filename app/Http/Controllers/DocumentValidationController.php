@@ -17,11 +17,21 @@ class DocumentValidationController extends Controller
     {
         $uuid = (string) $request->query('uuid', '');
 
+        if ($uuid === '') {
+            return view('adminDashboard.presidentUploadFinalDocument', ['uuid' => null])
+                ->with('error', 'Nenhum documento foi encontrado');
+        }
+
         if ($uuid !== '') {
             $isValidated = PresidentValidatedDocument::where('uuid', $uuid)->value('is_validated');
             if ($isValidated) {
                 return redirect('/president-upload-final-document-form')->with('error', 'O documento jÃ¡ foi validado.');
             }
+        }
+
+        if (!PresidentValidatedDocument::where('uuid', $uuid)->exists()) {
+            return view('adminDashboard.presidentUploadFinalDocument', ['uuid' => null])
+                ->with('error', 'Documento nao encontrado.');
         }
 
         return view('adminDashboard.presidentUploadFinalDocument', compact('uuid'));

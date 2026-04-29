@@ -20,6 +20,8 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::get('/user-verification', [AuthController::class, 'verifyUser'])->name('user-verification');
 Route::get('/president-upload-final-document-form', [DocumentValidationController::class, 'presidentValidationPage'])->name('president-upload-final-document-form');
 Route::post('/president-final-document',            [DocumentValidationController::class, 'presidentFinalDocument'])->name('president-final-document');
+Route::get('/user-upload-final-document-form',  [UserUploadFinalDocumentController::class, 'index'])->name('user-upload-final-document-form');
+Route::post('/user-upload-final-document',      [UserUploadFinalDocumentController::class, 'uploadFinalDocument'])->name('user-upload-final-document');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // Authenticated user routes
@@ -34,8 +36,6 @@ Route::middleware(['auth.custom'])->group(function () {
     Route::post('/print-addition',   [DocumentController::class, 'viewAddition'])->name('print-addition');
     Route::post('/download-docx',    [DocumentController::class, 'downloadDocument'])->name('download-docx');
 
-    Route::get('/user-upload-final-document-form',  [UserUploadFinalDocumentController::class, 'index'])->name('user-upload-final-document-form');
-    Route::post('/user-upload-final-document',      [UserUploadFinalDocumentController::class, 'uploadFinalDocument'])->name('user-upload-final-document');
 });
 
 // Admin routes
@@ -48,7 +48,7 @@ Route::middleware(['admin'])->group(function () {
     Route::get('/show-users',    [AdminPanelController::class, 'showUsers'])->name('show-users');
     Route::get('/show-documents', [AdminPanelController::class, 'showDocuments'])->name('show-documents');
     Route::get('/user-documents', [AdminPanelController::class, 'viewUserDocuments'])->name('user-documents');
-    Route::get('/addition-document', [AdminPanelController::class, 'viewAdditionDocuments'])->name('addition-document');
+    Route::match(['GET', 'POST'], '/addition-document', [AdminPanelController::class, 'viewAdditionDocuments'])->name('addition-document');
 
     Route::get('/upload-document-form',  [DocumentController::class, 'uploadDocumentForm'])->name('upload-document-form');
     Route::post('/upload-document',      [DocumentController::class, 'createNewDocumentAndFields'])->name('upload-document');

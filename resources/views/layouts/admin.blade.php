@@ -5,7 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="{{ asset('output.css') }}" rel="stylesheet">
     <title>PPG - Admin</title>
+<<<<<<< HEAD
     <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
+=======
+    <link rel="icon" type="image/x-png" href="{{ asset('favicon.png') }}">
+>>>>>>> 601fc850c2dbf938aee740b26271767f7c22c8ce
     <meta name="csrf-token" content="{{ csrf_token() }}">
 </head>
 <body class="">
