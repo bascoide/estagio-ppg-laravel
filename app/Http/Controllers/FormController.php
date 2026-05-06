@@ -163,12 +163,12 @@ class FormController extends Controller
 
         $file = $request->file('planFile');
 
-        if ($file->getMimeType() !== 'application/pdf') {
+        if (!$file->isValid() || $file->getMimeType() !== 'application/pdf' || $file->getSize() > 10 * 1024 * 1024) {
             throw new Exception('Apenas ficheiros .pdf permitidos!');
         }
 
         $uploadDir = public_path('uploads/submittedPlans/');
-        if (!is_dir($uploadDir) && !mkdir($uploadDir, 0777, true)) {
+        if (!is_dir($uploadDir) && !mkdir($uploadDir, 0755, true)) {
             throw new Exception('Falha ao criar diretório de upload');
         }
 
@@ -218,9 +218,10 @@ class FormController extends Controller
         $docxPath = $this->generateFinalDocx($finalDocument->document_id, $submittedData);
         $newPdfPath = $this->convertToPdf($docxPath);
 
-        $oldPdfPath = $finalDocument->pdf_path
-            ? public_path('uploads/generated_docs/' . $finalDocument->pdf_path)
-            : null;
+        $oldPdfPath = null;
+        if ($finalDocument->pdf_path && basename((string) $finalDocument->pdf_path) === (string) $finalDocument->pdf_path) {
+            $oldPdfPath = public_path('uploads/generated_docs/' . $finalDocument->pdf_path);
+        }
 
         $finalDocument->update(['pdf_path' => $newPdfPath]);
 
@@ -301,7 +302,7 @@ class FormController extends Controller
         if (!$document) throw new Exception('Documento não encontrado');
 
         $basePath     = public_path('uploads');
-        $templatePath = $basePath . '/schema/' . $document->docx_path;
+        $templatePath = $this->resolvePublicUploadFile('uploads/schema', (string) $document->docx_path);
         $outputDir    = $basePath . '/generated_docs/';
 
         if (!is_dir($outputDir) && !mkdir($outputDir, 0755, true)) {

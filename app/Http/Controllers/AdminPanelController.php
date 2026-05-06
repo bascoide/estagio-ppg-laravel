@@ -359,17 +359,22 @@ class AdminPanelController extends Controller
                 }
 
                 $file = $request->file('documentFile');
-                if ($file->getMimeType() !== 'application/pdf') {
+                if (!$file->isValid() || $file->getMimeType() !== 'application/pdf' || $file->getSize() > 10 * 1024 * 1024) {
                     throw new Exception('Apenas PDFs são permitidos');
                 }
 
                 $uploadDir = public_path('uploads/submittedAdditions/');
-                if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
+                if (!is_dir($uploadDir) && !mkdir($uploadDir, 0755, true)) {
+                    throw new Exception('Falha ao criar diretorio de upload');
+                }
 
                 $filename = uniqid('addition_') . '.pdf';
                 $file->move($uploadDir, $filename);
 
-                $additionName    = $request->input('addition_name', 'Adicionamento');
+                $additionName = trim((string) $request->input('addition_name', 'Adicionamento'));
+                if ($additionName === '' || mb_strlen($additionName) > 150) {
+                    throw new Exception('Nome do adicionamento invalido');
+                }
 
                 \App\Models\Addition::create([
                     'final_document_id' => $finalDocumentId,

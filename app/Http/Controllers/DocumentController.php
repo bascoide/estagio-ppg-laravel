@@ -32,7 +32,7 @@ class DocumentController extends Controller
         
         $this->authorizeFinalDocumentAccess($document);
 
-        $filePath = public_path('uploads/generated_docs/' . $document->pdf_path);
+        $filePath = $this->resolvePublicUploadFile('uploads/generated_docs', (string) $document->pdf_path);
         if (!file_exists($filePath)) {
             abort(404, 'Documento não encontrado');
         }
@@ -64,13 +64,13 @@ class DocumentController extends Controller
             abort(400, 'ID do documento não fornecido');
         }
 
-        $document = \DB::table('document')->where('id', $documentId)->first();
+        $document = \DB::table('document')->where('id', (int) $documentId)->first();
 
         if (!$document) {
             abort(404, 'Documento não encontrado');
         }
 
-        $filePath = public_path('uploads/schema/' . $document->docx_path);
+        $filePath = $this->resolvePublicUploadFile('uploads/schema', (string) $document->docx_path);
         if (!file_exists($filePath)) {
             abort(404, 'Caminho não encontrado');
         }
@@ -173,7 +173,8 @@ class DocumentController extends Controller
                 abort(400, 'Plano invalido');
             }
 
-            $filePath = public_path($finalDocument->plan->path);
+            $this->authorizeFinalDocumentAccess($finalDocument);
+            $filePath = $this->resolveStoredPublicFile((string) $finalDocument->plan->path, ['uploads/submittedPlans']);
             if (!file_exists($filePath)) {
                 abort(404, 'File not found');
             }
@@ -201,7 +202,7 @@ class DocumentController extends Controller
 
             $this->authorizeFinalDocumentAccess($addition->finalDocument);
 
-            $filePath = public_path($addition->path);
+            $filePath = $this->resolveStoredPublicFile((string) $addition->path, ['uploads/submittedAdditions']);
             if (!file_exists($filePath)) {
                 abort(404, 'File not found');
             }
@@ -237,13 +238,13 @@ class DocumentController extends Controller
             abort(400, 'ID do documento não fornecido');
         }
 
-        $document = \DB::table('document')->where('id', $documentId)->first();
+        $document = \DB::table('document')->where('id', (int) $documentId)->first();
 
         if (!$document) {
             abort(404, 'Documento não encontrado');
         }
 
-        $filePath = public_path('uploads/schema/' . $document->docx_path);
+        $filePath = $this->resolvePublicUploadFile('uploads/schema', (string) $document->docx_path);
         if (!file_exists($filePath)) {
             abort(404, 'Documento não encontrado');
         }
@@ -275,7 +276,7 @@ class DocumentController extends Controller
 
         try {
             $uploadDir = public_path('uploads/schema/');
-            if (!is_dir($uploadDir) && !mkdir($uploadDir, 0777, true)) {
+            if (!is_dir($uploadDir) && !mkdir($uploadDir, 0755, true)) {
                 throw new Exception('Falha ao criar diretório de upload');
             }
 
@@ -286,18 +287,14 @@ class DocumentController extends Controller
             }
 
             $documentName = trim((string) $request->input('documentName'));
-            $documentType = $request->input('documentType');
+            $documentType = (string) $request->input('documentType');
             $file = $request->file('documentFile');
 
-            // Validate MIME type
-            $allowedMimes = [
-                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                'application/zip',
-                'application/octet-stream'
-            ];
-            
+            if (!in_array($documentType, ['Plano', 'Protocolo'], true)) {
+                throw new Exception('Tipo de documento invalido.');
+            }
 
-            if (!in_array($file->getMimeType(), $allowedMimes)) {
+            if (!$file->isValid() || strtolower($file->getClientOriginalExtension()) !== 'docx') {
                 throw new Exception('Apenas ficheiros .docx permitidos!');
             }
 

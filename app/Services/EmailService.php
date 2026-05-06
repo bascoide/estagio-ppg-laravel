@@ -211,8 +211,8 @@ class EmailService
         $document = FinalDocument::find($finalDocumentId);
         if (!$document) return false;
 
-        $pdfPath = public_path('uploads/generated_docs/' . $document->pdf_path);
-        if (!file_exists($pdfPath)) return false;
+        $attachment = $this->finalDocumentAttachment($document);
+        if (!$attachment) return false;
 
         $fullUrl = url('/user-upload-final-document-form') . '?final_document_id=' . $finalDocumentId;
 
@@ -228,7 +228,7 @@ class EmailService
             'green'
         );
 
-        return $this->send($userEmail, 'O Seu Protocolo foi Aprovado', $html, true, [$pdfPath], $this->config['from_email']);
+        return $this->send($userEmail, 'O Seu Protocolo foi Aprovado', $html, true, [$attachment], $this->config['from_email']);
     }
 
     public function sendRejectedEmail(string $userEmail, int $finalDocumentId, string $rejectionReason = '', array $rejectedFields = []): bool
@@ -266,7 +266,14 @@ class EmailService
             return null;
         }
 
-        $fileName = basename($document->pdf_path);
+        $storedFileName = (string) $document->pdf_path;
+        $fileName = basename($storedFileName);
+
+        if ($storedFileName === '' || $fileName !== $storedFileName) {
+            \Log::error('Unsafe final document attachment path: ' . $storedFileName);
+            return null;
+        }
+
         $pdfPath = public_path('uploads/generated_docs/' . $fileName);
 
         if (!is_file($pdfPath) || !is_readable($pdfPath)) {
@@ -285,8 +292,8 @@ class EmailService
         $document = FinalDocument::find($finalDocumentId);
         if (!$document) return false;
 
-        $pdfPath = public_path('uploads/generated_docs/' . $document->pdf_path);
-        if (!file_exists($pdfPath)) return false;
+        $attachment = $this->finalDocumentAttachment($document);
+        if (!$attachment) return false;
 
         $html = $this->renderEmailTemplate(
             'Gestão de Protocolos',
@@ -300,7 +307,7 @@ class EmailService
             'red'
         );
 
-        return $this->send($userEmail, 'O Seu Protocolo foi Invalidado', $html, true, [$pdfPath], $this->config['from_email']);
+        return $this->send($userEmail, 'O Seu Protocolo foi Invalidado', $html, true, [$attachment], $this->config['from_email']);
     }
 
     public function sendPresidentialValidationEmail(string $presidentEmail, int $finalDocumentId, string $adminName): bool
@@ -308,11 +315,13 @@ class EmailService
         $document = FinalDocument::find($finalDocumentId);
         if (!$document) return false;
 
-        $pdfPath = public_path('uploads/generated_docs/' . $document->pdf_path);
-        if (!file_exists($pdfPath)) return false;
+        $attachment = $this->finalDocumentAttachment($document);
+        if (!$attachment) return false;
 
         $presidentDoc = PresidentValidatedDocument::where('final_document_id', $finalDocumentId)->first();
-        $uuid = $presidentDoc ? $presidentDoc->uuid : '';
+        if (!$presidentDoc) return false;
+
+        $uuid = $presidentDoc->uuid;
         $fullUrl = url('/president-upload-final-document-form') . '?uuid=' . $uuid;
 
         $html = $this->renderEmailTemplate(
@@ -327,7 +336,7 @@ class EmailService
             'blue'
         );
 
-        return $this->send($presidentEmail, 'O Protocolo está à espera da sua assinatura', $html, true, [$pdfPath], $this->config['from_email']);
+        return $this->send($presidentEmail, 'O Protocolo está à espera da sua assinatura', $html, true, [$attachment], $this->config['from_email']);
     }
 
     public function sendAcceptedValidationEmail(string $userEmail, int $finalDocumentId): bool
@@ -335,8 +344,8 @@ class EmailService
         $document = FinalDocument::find($finalDocumentId);
         if (!$document) return false;
 
-        $pdfPath = public_path('uploads/generated_docs/' . $document->pdf_path);
-        if (!file_exists($pdfPath)) return false;
+        $attachment = $this->finalDocumentAttachment($document);
+        if (!$attachment) return false;
 
         $html = $this->renderEmailTemplate(
             'Gestão de Protocolos',
@@ -349,7 +358,7 @@ class EmailService
             'green'
         );
 
-        return $this->send($userEmail, 'O Seu Protocolo foi Validado', $html, true, [$pdfPath], $this->config['from_email']);
+        return $this->send($userEmail, 'O Seu Protocolo foi Validado', $html, true, [$attachment], $this->config['from_email']);
     }
 
     public function sendCancelledEmail(string $userEmail, int $finalDocumentId): bool
@@ -357,8 +366,8 @@ class EmailService
         $document = FinalDocument::find($finalDocumentId);
         if (!$document) return false;
 
-        $pdfPath = public_path('uploads/generated_docs/' . $document->pdf_path);
-        if (!file_exists($pdfPath)) return false;
+        $attachment = $this->finalDocumentAttachment($document);
+        if (!$attachment) return false;
 
         $html = $this->renderEmailTemplate(
             'Gestão de Protocolos',
@@ -371,7 +380,7 @@ class EmailService
             'gray'
         );
 
-        return $this->send($userEmail, 'O Seu Protocolo foi Anulado', $html, true, [$pdfPath], $this->config['from_email']);
+        return $this->send($userEmail, 'O Seu Protocolo foi Anulado', $html, true, [$attachment], $this->config['from_email']);
     }
 
     public function sendPlanEmail(string $userEmail, int $finalDocumentId): bool
@@ -379,8 +388,8 @@ class EmailService
         $document = FinalDocument::find($finalDocumentId);
         if (!$document) return false;
 
-        $pdfPath = public_path('uploads/generated_docs/' . $document->pdf_path);
-        if (!file_exists($pdfPath)) return false;
+        $attachment = $this->finalDocumentAttachment($document);
+        if (!$attachment) return false;
 
         $fullUrl = url('/form') . '?filled_plan_id=' . $finalDocumentId;
 
@@ -396,6 +405,6 @@ class EmailService
             'blue'
         );
 
-        return $this->send($userEmail, 'O Seu Plano está Pendente', $html, true, [$pdfPath], $this->config['from_email']);
+        return $this->send($userEmail, 'O Seu Plano está Pendente', $html, true, [$attachment], $this->config['from_email']);
     }
 }

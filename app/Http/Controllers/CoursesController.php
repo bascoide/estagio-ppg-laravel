@@ -47,10 +47,10 @@ class CoursesController extends Controller
     public function addCourse(Request $request)
     {
         $courseTypeId = (int) $request->input('course_type', 0);
-        $courseName   = $request->input('course_name');
+        $courseName   = trim((string) $request->input('course_name'));
         $isActive     = $request->input('is_course_active') === '1';
 
-        if (!$courseTypeId || !$courseName) {
+        if (!$courseTypeId || !$courseName || mb_strlen($courseName) > 150) {
             return redirect('/courses')->with('error', 'Preencha todos os campos obrigatórios!');
         }
 
@@ -73,10 +73,12 @@ class CoursesController extends Controller
 
     public function editCourseName(Request $request)
     {
-        $id      = $request->input('id');
-        $newName = $request->input('new_name');
+        $id      = (int) $request->input('id');
+        $newName = trim((string) $request->input('new_name'));
 
-        if (!$id) return redirect('/courses');
+        if (!$id || $newName === '' || mb_strlen($newName) > 150) {
+            return redirect('/courses')->with('error', 'Nome do curso invalido');
+        }
 
         $course = Course::find($id);
         if ($course) {

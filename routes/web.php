@@ -14,22 +14,22 @@ use App\Http\Controllers\ProfessorController;
 // Public routes
 Route::get('/',  [AuthController::class, 'showLogin']);
 Route::get('/login',  [AuthController::class, 'showLogin'])->name('login');
-Route::post('/login', [AuthController::class, 'login']);
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');
 Route::get('/register',  [AuthController::class, 'showRegister'])->name('register');
-Route::post('/register', [AuthController::class, 'register']);
-Route::get('/user-verification', [AuthController::class, 'verifyUser'])->name('user-verification');
-Route::get('/president-upload-final-document-form', [DocumentValidationController::class, 'presidentValidationPage'])->name('president-upload-final-document-form');
-Route::post('/president-final-document',            [DocumentValidationController::class, 'presidentFinalDocument'])->name('president-final-document');
-Route::get('/user-upload-final-document-form',  [UserUploadFinalDocumentController::class, 'index'])->name('user-upload-final-document-form');
-Route::post('/user-upload-final-document',      [UserUploadFinalDocumentController::class, 'uploadFinalDocument'])->name('user-upload-final-document');
+Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:registration');
+Route::get('/user-verification', [AuthController::class, 'verifyUser'])->middleware('throttle:verification')->name('user-verification');
+Route::get('/president-upload-final-document-form', [DocumentValidationController::class, 'presidentValidationPage'])->middleware('throttle:verification')->name('president-upload-final-document-form');
+Route::post('/president-final-document',            [DocumentValidationController::class, 'presidentFinalDocument'])->middleware('throttle:uploads')->name('president-final-document');
+Route::get('/user-upload-final-document-form',  [UserUploadFinalDocumentController::class, 'index'])->middleware('throttle:verification')->name('user-upload-final-document-form');
+Route::post('/user-upload-final-document',      [UserUploadFinalDocumentController::class, 'uploadFinalDocument'])->middleware('throttle:uploads')->name('user-upload-final-document');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // Authenticated user routes
-Route::middleware(['auth.custom', 'no.cache'])->group(function () {
+Route::middleware(['auth.custom', 'no.cache', 'throttle:authenticated'])->group(function () {
     Route::get('/guia-form',   [FormController::class, 'index'])->name('guia-form');
     Route::get('/form',        [FormController::class, 'form'])->name('form');
     Route::get('/get-form',    [FormController::class, 'generateForm'])->name('get-form');
-    Route::post('/submit-form', [FormController::class, 'submitForm'])->name('submit-form');
+    Route::post('/submit-form', [FormController::class, 'submitForm'])->middleware('throttle:uploads')->name('submit-form');
 
     Route::post('/print-pdf',       [DocumentController::class, 'printDocument'])->name('print-pdf');
     Route::post('/print-document',   [DocumentController::class, 'printDocumentForm'])->name('print-document');
@@ -39,7 +39,7 @@ Route::middleware(['auth.custom', 'no.cache'])->group(function () {
 });
 
 // Admin routes
-Route::middleware(['admin', 'no.cache'])->group(function () {
+Route::middleware(['admin', 'no.cache', 'throttle:admin'])->group(function () {
     Route::get('/view-pending-documents',   [AdminPanelController::class, 'viewPendingDocuments'])->name('view-pending-documents');
     Route::get('/need-validation-documents', [AdminPanelController::class, 'viewNeedValidationDocuments'])->name('need-validation-documents');
     Route::get('/view-validation-documents', [AdminPanelController::class, 'viewValidationDocuments'])->name('view-validation-documents');
@@ -48,10 +48,10 @@ Route::middleware(['admin', 'no.cache'])->group(function () {
     Route::get('/show-users',    [AdminPanelController::class, 'showUsers'])->name('show-users');
     Route::get('/show-documents', [AdminPanelController::class, 'showDocuments'])->name('show-documents');
     Route::get('/user-documents', [AdminPanelController::class, 'viewUserDocuments'])->name('user-documents');
-    Route::match(['GET', 'POST'], '/addition-document', [AdminPanelController::class, 'viewAdditionDocuments'])->name('addition-document');
+    Route::match(['GET', 'POST'], '/addition-document', [AdminPanelController::class, 'viewAdditionDocuments'])->middleware('throttle:uploads')->name('addition-document');
 
     Route::get('/upload-document-form',  [DocumentController::class, 'uploadDocumentForm'])->name('upload-document-form');
-    Route::post('/upload-document',      [DocumentController::class, 'createNewDocumentAndFields'])->name('upload-document');
+    Route::post('/upload-document',      [DocumentController::class, 'createNewDocumentAndFields'])->middleware('throttle:uploads')->name('upload-document');
     Route::post('/deactivate-document',  [DocumentController::class, 'deactivateDocument'])->name('deactivate-document');
     Route::post('/activate-document',    [DocumentController::class, 'activateDocument'])->name('activate-document');
     Route::post('/print-document-admin', [DocumentController::class, 'printDocumentForm'])->name('print-document-admin');

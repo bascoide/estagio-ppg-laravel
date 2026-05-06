@@ -54,7 +54,7 @@ class UserUploadFinalDocumentController extends Controller
         }
 
         // Autenticar utilizador com email+password
-        $email    = $request->input('email', '');
+        $email    = strtolower(trim((string) $request->input('email', '')));
         $password = $request->input('password', '');
 
         if (empty($email) || empty($password)) {
@@ -64,7 +64,7 @@ class UserUploadFinalDocumentController extends Controller
 
         $user = User::where('email', $email)->first();
 
-        if (!$user || !Hash::check($password, $user->password)) {
+        if (!$user || !$user->verified || !Hash::check($password, $user->password)) {
             return redirect('/user-upload-final-document-form?final_document_id=' . $finalDocumentId)
                 ->with('error', 'Email ou senha inválidos!');
         }
@@ -75,7 +75,10 @@ class UserUploadFinalDocumentController extends Controller
         }
 
         $uploadDir = public_path('uploads/generated_docs/');
-        if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
+        if (!is_dir($uploadDir) && !mkdir($uploadDir, 0755, true)) {
+            return redirect('/user-upload-final-document-form?final_document_id=' . $finalDocumentId)
+                ->with('error', 'Falha ao criar diretorio de upload.');
+        }
 
         $filename   = uniqid('final_doc_', true) . '.pdf';
         $file->move($uploadDir, $filename);

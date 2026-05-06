@@ -13,13 +13,34 @@ use Illuminate\Support\Facades\DB;
 
 class DocumentValidationController extends Controller
 {
+    private const PRESIDENT_LINK_EXPIRY_DAYS = 7;
+
     public function presidentValidationPage(Request $request)
     {
-        $uuid = (string) $request->query('uuid', '');
+        $uuid = trim((string) $request->query('uuid', ''));
 
         if ($uuid === '') {
             return view('adminDashboard.presidentUploadFinalDocument', ['uuid' => null])
                 ->with('error', 'Nenhum documento foi encontrado');
+        }
+
+        if (!preg_match('/^[0-9a-fA-F-]{36}$/', $uuid)) {
+            return view('adminDashboard.presidentUploadFinalDocument', ['uuid' => null])
+                ->with('error', 'Documento nao encontrado.');
+        }
+
+        $presidentDocument = PresidentValidatedDocument::where('uuid', $uuid)->first();
+        if (!$presidentDocument) {
+            return view('adminDashboard.presidentUploadFinalDocument', ['uuid' => null])
+                ->with('error', 'Documento nao encontrado.');
+        }
+
+        if ($presidentDocument->is_validated) {
+            return redirect('/president-upload-final-document-form')->with('error', 'O documento ja foi validado.');
+        }
+
+        if ($this->presidentLinkExpired($presidentDocument)) {
+            return redirect('/president-upload-final-document-form')->with('error', 'Este link expirou. Solicite um novo link de validacao.');
         }
 
         if ($uuid !== '') {
@@ -41,8 +62,12 @@ class DocumentValidationController extends Controller
     {
         try {
             $finalDocumentId   = (int) $request->input('final_document_id');
-            $presidencialEmail = trim((string) $request->input('presidencial_email'));
+            $presidencialEmail = strtolower(trim((string) $request->input('presidencial_email')));
             $adminName         = session('admin_name', 'Admin');
+
+            if (!filter_var($presidencialEmail, FILTER_VALIDATE_EMAIL)) {
+                throw new Exception('Email presidencial invalido.');
+            }
 
             $finalDocument = FinalDocument::find($finalDocumentId);
             if (!$finalDocument) {
@@ -59,6 +84,7 @@ class DocumentValidationController extends Controller
             PresidentValidatedDocument::create([
                 'uuid'              => $uuid,
                 'final_document_id' => $finalDocumentId,
+                'expires_at'        => now()->addDays(self::PRESIDENT_LINK_EXPIRY_DAYS),
             ]);
 
             PresidentEmail::firstOrCreate(['email' => $presidencialEmail]);
@@ -90,7 +116,11 @@ class DocumentValidationController extends Controller
                 throw new Exception('Erro no upload do arquivo');
             }
 
-            $uuid = (string) $request->input('verified_uuid');
+            $uuid = trim((string) $request->input('verified_uuid'));
+            if (!preg_match('/^[0-9a-fA-F-]{36}$/', $uuid)) {
+                throw new Exception('UUID invalido');
+            }
+
             $pvd  = PresidentValidatedDocument::with('finalDocument.user')->where('uuid', $uuid)->first();
 
             if (!$pvd) {
@@ -101,14 +131,18 @@ class DocumentValidationController extends Controller
                 throw new Exception('O documento jÃ¡ foi validado.');
             }
 
+            if ($this->presidentLinkExpired($pvd)) {
+                throw new Exception('Este link expirou. Solicite um novo link de validacao.');
+            }
+
             $file = $request->file('document');
-            if ($file->getMimeType() !== 'application/pdf') {
+            if (!$file->isValid() || $file->getMimeType() !== 'application/pdf' || $file->getSize() > 10 * 1024 * 1024) {
                 throw new Exception('Arquivo deve ser PDF');
             }
 
             $uploadDir = public_path('uploads/generated_docs');
-            if (!is_dir($uploadDir)) {
-                mkdir($uploadDir, 0755, true);
+            if (!is_dir($uploadDir) && !mkdir($uploadDir, 0755, true)) {
+                throw new Exception('Falha ao criar diretorio de upload');
             }
 
             $filename = uniqid('president_doc_') . '.pdf';
@@ -201,7 +235,12 @@ class DocumentValidationController extends Controller
     {
         if ($request->isMethod('POST') && $request->has('new_president_email')) {
             try {
-                PresidentEmail::firstOrCreate(['email' => trim($request->input('new_president_email'))]);
+                $email = strtolower(trim((string) $request->input('new_president_email')));
+                if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                    throw new Exception('Email invalido.');
+                }
+
+                PresidentEmail::firstOrCreate(['email' => $email]);
                 $presidentEmails = PresidentEmail::all()->toArray();
                 return view('adminDashboard.listPresidentEmails', compact('presidentEmails'))
                     ->with('message', 'Email presidencial adicionado com sucesso!');
@@ -223,5 +262,10 @@ class DocumentValidationController extends Controller
         } catch (Exception $e) {
             return back()->with('error', 'Erro! ' . $e->getMessage());
         }
+    }
+
+    private function presidentLinkExpired(PresidentValidatedDocument $presidentDocument): bool
+    {
+        return $presidentDocument->expires_at === null || $presidentDocument->expires_at->isPast();
     }
 }

@@ -18,7 +18,7 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
-        $email    = $request->input('email', '');
+        $email    = strtolower(trim((string) $request->input('email', '')));
         $password = $request->input('password', '');
 
         if (empty($email) || empty($password)) {
@@ -40,6 +40,7 @@ class AuthController extends Controller
                 return back()->with('error', 'Email ou senha inválidos!');
             }
 
+            $request->session()->regenerate();
             session(['user_id' => $user->id, 'admin' => (bool) $user->admin]);
 
             if ($user->admin) {
@@ -61,8 +62,8 @@ class AuthController extends Controller
 
     public function register(Request $request)
     {
-        $name     = $request->input('name', '');
-        $email    = $request->input('email', '');
+        $name     = trim((string) $request->input('name', ''));
+        $email    = strtolower(trim((string) $request->input('email', '')));
         $password = $request->input('password', '');
         $courseTypeId = (int) $request->input('CourseType', 0);
         $courseId = (int) $request->input('Course', 0);
@@ -71,7 +72,15 @@ class AuthController extends Controller
             return back()->with('error', 'Email e senha são obrigatórios!');
         }
 
-        if (!preg_match('/@iscap\.ipp\.pt$/', $email)) {
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return back()->with('error', 'Email invalido!');
+        }
+
+        if (strlen((string) $password) < 8) {
+            return back()->with('error', 'A senha deve ter pelo menos 8 caracteres!');
+        }
+
+        if (!preg_match('/@iscap\.ipp\.pt$/i', $email)) {
             return back()->with('error', 'Apenas emails com domínio @iscap.ipp.pt são permitidos!');
         }
 
@@ -157,7 +166,12 @@ class AuthController extends Controller
     public function setAdminName(Request $request)
     {
         if ($request->has('admin_name')) {
-            session(['admin_name' => $request->input('admin_name')]);
+            $adminName = trim((string) $request->input('admin_name'));
+            if ($adminName === '' || mb_strlen($adminName) > 100) {
+                return back()->with('error', 'Nome invalido.');
+            }
+
+            session(['admin_name' => $adminName]);
             return redirect('/view-pending-documents');
         }
 
