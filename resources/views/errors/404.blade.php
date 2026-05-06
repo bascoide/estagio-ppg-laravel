@@ -13,11 +13,11 @@
     <!-- //google fonts -->
 
     <!--/Style-CSS -->
-    <link rel="stylesheet" href="css/style.css" type="text/css" media="all" />
+    <link rel="stylesheet" href="{{ asset('404-error/css/style.css') }}" type="text/css" media="all" />
     <!--//Style-CSS -->
 
     <!--/fontAwesome-CSS -->
-    <link rel="stylesheet" href="css/fontAwesome.css" type="text/css" media="all" />
+    <link rel="stylesheet" href="{{ asset('404-error/css/fontAwesome.css') }}" type="text/css" media="all" />
     <!--/fontAwesome-CSS -->
 </head>
 
@@ -27,7 +27,7 @@
         <div class="page">
             <div class="content">
                 <div class="logo">
-                    <a class="brand-logo" href="index.html">Error 404</a>
+                    <a class="brand-logo" href="/">Error 404</a>
                 </div>
                 <div class="w3l-error-grid">
                     <h1>404</h1>
@@ -44,10 +44,10 @@
                     <p>Powered by: <a href="https://unknowncode.dev">Unknown Code by Ashendra</a></p>
                 </div>        
             </div>
-            <img src="images/bg.jpg" class="img-responsive" alt="error image" />
+            <img src="{{ asset('404-error/images/bg.jpg') }}" class="img-responsive" alt="error image" />
         </div>
 
-        <script src="js/jquery-3.3.1.min.js"></script>
+        <script src="{{ asset('404-error/js/jquery-3.3.1.min.js') }}"></script>
         <script>
             var lFollowX = 0,
                 lFollowY = 0,

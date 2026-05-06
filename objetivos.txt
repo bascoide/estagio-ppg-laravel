@@ -1,0 +1,8 @@
+Coisas a fazer: 
+
+ver se um servidor apache precisa do comando artisan e do composer do php
+fazer com que o apache funcione em FPM
+o que e redis
+ver a segurança da app
+por a app a funcionar no Linux ( AlmaLinux ) 
+implementar a pagina que permite a um candidato a ver os protocolos e o estado dos mesmos
