@@ -81,7 +81,7 @@ class DocumentValidationController extends Controller
             $data[8]  = chr(ord($data[8]) & 0x3f | 0x80);
             $uuid     = vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
 
-            PresidentValidatedDocument::create([
+            $presidentDocument = PresidentValidatedDocument::create([
                 'uuid'              => $uuid,
                 'final_document_id' => $finalDocumentId,
                 'expires_at'        => now()->addDays(self::PRESIDENT_LINK_EXPIRY_DAYS),
@@ -90,7 +90,7 @@ class DocumentValidationController extends Controller
             PresidentEmail::firstOrCreate(['email' => $presidencialEmail]);
             $finalDocument->update(['status' => 'Inativo']);
 
-            if (!(new EmailService())->sendPresidentialValidationEmail($presidencialEmail, $finalDocumentId, $adminName)) {
+            if (!(new EmailService())->sendPresidentialValidationEmail($presidencialEmail, $finalDocumentId, $adminName, $presidentDocument->uuid)) {
                 throw new Exception('Falha ao enviar email para validaÃ§Ã£o presidencial.');
             }
 
@@ -148,13 +148,22 @@ class DocumentValidationController extends Controller
             $filename = uniqid('president_doc_') . '.pdf';
             $file->move($uploadDir, $filename);
 
+            DB::beginTransaction();
+
+            $pvd = PresidentValidatedDocument::with('finalDocument.user')
+                ->where('uuid', $uuid)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$pvd || $pvd->is_validated || $this->presidentLinkExpired($pvd)) {
+                throw new Exception('Este documento ja nao esta disponivel para validacao.');
+            }
+
             $userEmail       = $pvd->finalDocument->user->email;
             $userId          = $pvd->finalDocument->user_id;
             $documentId      = $pvd->finalDocument->document_id;
             $finalDocumentId = $pvd->final_document_id;
             $planId          = $pvd->finalDocument->plan_id;
-
-            DB::beginTransaction();
 
             $validatedDocument = FinalDocument::create([
                 'user_id'     => $userId,

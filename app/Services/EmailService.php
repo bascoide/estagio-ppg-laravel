@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\FinalDocument;
-use App\Models\PresidentValidatedDocument;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception as PHPMailerException;
 
@@ -310,7 +309,7 @@ class EmailService
         return $this->send($userEmail, 'O Seu Protocolo foi Invalidado', $html, true, [$attachment], $this->config['from_email']);
     }
 
-    public function sendPresidentialValidationEmail(string $presidentEmail, int $finalDocumentId, string $adminName): bool
+    public function sendPresidentialValidationEmail(string $presidentEmail, int $finalDocumentId, string $adminName, string $uuid): bool
     {
         $document = FinalDocument::find($finalDocumentId);
         if (!$document) return false;
@@ -318,10 +317,6 @@ class EmailService
         $attachment = $this->finalDocumentAttachment($document);
         if (!$attachment) return false;
 
-        $presidentDoc = PresidentValidatedDocument::where('final_document_id', $finalDocumentId)->first();
-        if (!$presidentDoc) return false;
-
-        $uuid = $presidentDoc->uuid;
         $fullUrl = url('/president-upload-final-document-form') . '?uuid=' . $uuid;
 
         $html = $this->renderEmailTemplate(

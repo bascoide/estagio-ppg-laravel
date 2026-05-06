@@ -13,6 +13,7 @@ use App\Models\User;
 use App\Services\EmailService;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use ZipArchive;
 
 class FormController extends Controller
@@ -117,6 +118,10 @@ class FormController extends Controller
             return redirect('/form')->with('error', 'ID do documento inválido');
         }
 
+        $finalDocumentId = null;
+        $generatedPdfPath = null;
+        $uploadedPlanPath = null;
+
         try {
             $userId = (int) session('user_id');
             $userCourse = Course::join('user', 'user.course_id', '=', 'course.id')
@@ -138,9 +143,10 @@ class FormController extends Controller
                 'field_values' => $request->input('field_values', []),
             ];
 
-            $planId = $this->processFileUpload($request);
+            DB::beginTransaction();
 
-            $finalDocumentId = $this->createFinalDocument($documentId, $userId, $submittedData, $planId);
+            $planId = $this->processFileUpload($request, $uploadedPlanPath);
+            $finalDocumentId = $this->createFinalDocument($documentId, $userId, $submittedData, $planId, $generatedPdfPath);
 
             if (!$finalDocumentId) {
                 throw new Exception('Falha ao criar documento final');
@@ -149,13 +155,21 @@ class FormController extends Controller
             $this->createVariousFieldValues($documentId, $userId, $submittedData, $finalDocumentId);
             $this->sendSuccessNotification($userId, $finalDocumentId, $planId !== null);
 
+            DB::commit();
+
             return redirect('/form');
         } catch (Exception $e) {
+            if (DB::transactionLevel() > 0) {
+                DB::rollBack();
+            }
+
+            $this->cleanupFailedSubmission($finalDocumentId, $uploadedPlanPath, $generatedPdfPath);
+
             return redirect('/form')->with('error', $e->getMessage());
         }
     }
 
-    private function processFileUpload(Request $request): ?int
+    private function processFileUpload(Request $request, ?string &$uploadedPlanPath = null): ?int
     {
         if (!$request->hasFile('planFile') || $request->file('planFile')->getError() !== UPLOAD_ERR_OK) {
             return null;
@@ -176,9 +190,29 @@ class FormController extends Controller
         $file->move($uploadDir, $fileName);
 
         $filePath = '/uploads/submittedPlans/' . $fileName;
+        $uploadedPlanPath = public_path(ltrim($filePath, '/'));
 
         $plan = SubmittedPlan::create(['path' => $filePath, 'verified' => false]);
         return $plan->id;
+    }
+
+    private function cleanupFailedSubmission(?int $finalDocumentId, ?string $uploadedPlanPath, ?string $generatedPdfPath): void
+    {
+        if ($generatedPdfPath && is_file($generatedPdfPath)) {
+            @unlink($generatedPdfPath);
+        } elseif ($finalDocumentId) {
+            $finalDocument = FinalDocument::find($finalDocumentId);
+            if ($finalDocument && $finalDocument->pdf_path && basename((string) $finalDocument->pdf_path) === (string) $finalDocument->pdf_path) {
+                $pdfPath = public_path('uploads/generated_docs/' . $finalDocument->pdf_path);
+                if (is_file($pdfPath)) {
+                    @unlink($pdfPath);
+                }
+            }
+        }
+
+        if ($uploadedPlanPath && is_file($uploadedPlanPath)) {
+            @unlink($uploadedPlanPath);
+        }
     }
 
     private function sendSuccessNotification(int $userId, int $finalDocumentId, bool $hasPlanFile): void
@@ -192,10 +226,11 @@ class FormController extends Controller
         }
     }
 
-    public function createFinalDocument(int $documentId, int $userId, array $submittedData, ?int $planId = null): int
+    public function createFinalDocument(int $documentId, int $userId, array $submittedData, ?int $planId = null, ?string &$generatedPdfPath = null): int
     {
         $docxPath = $this->generateFinalDocx($documentId, $submittedData);
         $pdfPath  = $this->convertToPdf($docxPath);
+        $generatedPdfPath = public_path('uploads/generated_docs/' . $pdfPath);
 
         $finalDocument = FinalDocument::create([
             'user_id'     => $userId,
@@ -309,7 +344,7 @@ class FormController extends Controller
             throw new Exception('Falha ao criar diretório output');
         }
 
-        $outputDocxPath = $outputDir . 'document_' . $documentId . '_' . time() . '.docx';
+        $outputDocxPath = $outputDir . uniqid('document_' . $documentId . '_', true) . '.docx';
         if (!copy($templatePath, $outputDocxPath)) {
             throw new Exception('Falha ao copiar template');
         }
