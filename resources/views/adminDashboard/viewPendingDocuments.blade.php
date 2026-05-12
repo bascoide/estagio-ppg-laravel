@@ -21,7 +21,7 @@
                     </form>
 
                     <div class="flex items-center">
-                        @if($document['plan_is_verified'])
+                        @if(!empty($document['plan_id']) && $document['plan_is_verified'])
                             <form method="POST" action="{{ route('view-plan') }}" target="_blank" class="plan-form">
                                 @csrf
                                 <input type="hidden" name="final_document_id" value="{{ $document['final_document_id'] }}">
@@ -30,7 +30,7 @@
                                     <img class="h-10 cursor-pointer" src="{{ asset('images/plan_icon.webp') }}">
                                 </button>
                             </form>
-                        @else
+                        @elseif(!empty($document['plan_id']))
                             <form method="POST" action="{{ route('view-plan') }}" target="_blank" class="plan-form"
                                 id="planForm{{ $document['final_document_id'] }}"
                                 onsubmit="event.preventDefault(); verifyPlan({{ $document['final_document_id'] }}, {{ $document['plan_id'] }}, this);">

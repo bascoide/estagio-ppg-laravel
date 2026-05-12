@@ -137,6 +137,11 @@ class FormController extends Controller
                 throw new Exception('Documento invalido ou indisponivel para o seu curso.');
             }
 
+            $document = Document::find($documentId);
+            if (!$document) {
+                throw new Exception('Documento nao encontrado.');
+            }
+
             $submittedData = [
                 'field_ids'    => $request->input('field_ids', []),
                 'field_names'  => $request->input('field_names', []),
@@ -145,7 +150,7 @@ class FormController extends Controller
 
             DB::beginTransaction();
 
-            $planId = $this->processFileUpload($request, $uploadedPlanPath);
+            $planId = $this->processFileUpload($request, $uploadedPlanPath, $document->type !== 'Plano');
             $finalDocumentId = $this->createFinalDocument($documentId, $userId, $submittedData, $planId, $generatedPdfPath);
 
             if (!$finalDocumentId) {
@@ -169,9 +174,13 @@ class FormController extends Controller
         }
     }
 
-    private function processFileUpload(Request $request, ?string &$uploadedPlanPath = null): ?int
+    private function processFileUpload(Request $request, ?string &$uploadedPlanPath = null, bool $required = false): ?int
     {
         if (!$request->hasFile('planFile') || $request->file('planFile')->getError() !== UPLOAD_ERR_OK) {
+            if ($required) {
+                throw new Exception('O upload do plano assinado e obrigatorio.');
+            }
+
             return null;
         }
 
@@ -247,22 +256,17 @@ class FormController extends Controller
         return $finalDocument->id;
     }
 
-    public function regenerateFinalDocumentPdf(FinalDocument $finalDocument): string
+    public function regenerateFinalDocumentPdf(FinalDocument $finalDocument, ?string &$oldPdfPath = null): string
     {
         $submittedData = $this->buildSubmittedDataFromFinalDocument($finalDocument);
         $docxPath = $this->generateFinalDocx($finalDocument->document_id, $submittedData);
         $newPdfPath = $this->convertToPdf($docxPath);
 
-        $oldPdfPath = null;
         if ($finalDocument->pdf_path && basename((string) $finalDocument->pdf_path) === (string) $finalDocument->pdf_path) {
             $oldPdfPath = public_path('uploads/generated_docs/' . $finalDocument->pdf_path);
         }
 
         $finalDocument->update(['pdf_path' => $newPdfPath]);
-
-        if ($oldPdfPath && is_file($oldPdfPath) && basename($oldPdfPath) !== $newPdfPath) {
-            @unlink($oldPdfPath);
-        }
 
         return $newPdfPath;
     }

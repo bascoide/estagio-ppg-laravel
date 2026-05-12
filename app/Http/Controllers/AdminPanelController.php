@@ -415,6 +415,9 @@ class AdminPanelController extends Controller
 
     public function editFinalDocument(Request $request)
     {
+        $oldPdfPath = null;
+        $newPdfPath = null;
+
         try {
             $finalDocumentId = (int) $request->input('final_document_id');
             $fields          = $request->input('fields', []);
@@ -476,7 +479,7 @@ class AdminPanelController extends Controller
                     ->update(['value' => $value]);
             }
 
-            (new FormController())->regenerateFinalDocumentPdf($finalDocument);
+            $newPdfPath = (new FormController())->regenerateFinalDocumentPdf($finalDocument, $oldPdfPath);
 
             if ($status) {
                 $finalDocument->update(['status' => $status]);
@@ -498,6 +501,11 @@ class AdminPanelController extends Controller
             }
 
             DB::commit();
+
+            if ($oldPdfPath && is_file($oldPdfPath) && basename($oldPdfPath) !== $newPdfPath) {
+                @unlink($oldPdfPath);
+            }
+
             (new LogsController())->logAction('edit-document', $finalDocumentId);
             if (in_array($status, ['Aceite', 'Recusado'], true)) {
                 return redirect(session('document_return_url', route('view-pending-documents')))
@@ -508,6 +516,14 @@ class AdminPanelController extends Controller
             if (DB::transactionLevel() > 0) {
                 DB::rollBack();
             }
+
+            if ($newPdfPath) {
+                $generatedPath = public_path('uploads/generated_docs/' . $newPdfPath);
+                if (is_file($generatedPath)) {
+                    @unlink($generatedPath);
+                }
+            }
+
             return back()->with('error', $e->getMessage());
         }
     }

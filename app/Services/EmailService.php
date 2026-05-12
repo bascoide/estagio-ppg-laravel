@@ -387,13 +387,17 @@ class EmailService
         if (!$attachment) return false;
 
         $fullUrl = url('/form') . '?filled_plan_id=' . $finalDocumentId;
+        $downloadUrl = url('/download-final-document') . '?final_document_id=' . $finalDocumentId;
 
         $html = $this->renderEmailTemplate(
             'Gestão de Planos',
             'Plano pendente',
             '<p style="margin: 0 0 14px 0;">O seu plano encontra-se <strong>pendente</strong>.</p>
              <p style="margin: 0 0 14px 0;">Solicite as assinaturas necessárias para finalizar o documento.</p>
-             <p style="margin: 0;">O ficheiro segue em anexo para referência.</p>',
+             <p style="margin: 0 0 14px 0;">O ficheiro segue em anexo para referência.</p>
+             <p style="margin: 18px 0 0 0;">
+                <a href="' . htmlspecialchars($downloadUrl) . '" style="display: inline-block; background-color: #374151; color: #ffffff; text-decoration: none; padding: 12px 22px; border-radius: 6px; font-weight: 600;">Transferir plano preenchido</a>
+             </p>',
             'Submeter plano assinado',
             $fullUrl,
             'Pendente',

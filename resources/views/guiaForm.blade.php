@@ -2,6 +2,23 @@
 
 @section('content')
 <div class="max-w-3xl w-full sm:p-10 p-6 bg-white mt-10 shadow-lg sm:mx-10 mx-4 mb-10">
+    @include('messageError')
+
+    <div class="mb-6 p-4 border border-blue-400 bg-blue-100 rounded">
+        <div class="sm:flex sm:items-center sm:justify-between gap-4">
+            <div>
+                <h2 class="text-lg font-bold text-blue-900">Acompanhe as suas submissões</h2>
+                <p class="text-gray-700 mt-1">
+                    Consulte os planos, protocolos e o estado de cada documento submetido.
+                </p>
+            </div>
+            <a href="{{ route('user-submissions') }}"
+                class="inline-block mt-4 sm:mt-0 px-5 py-2 text-white bg-blue-900 rounded-md hover:bg-blue-800 transition-colors duration-200">
+                Ver submissões
+            </a>
+        </div>
+    </div>
+
     <h1 class="text-2xl font-bold text-gray-900 mb-4">Antes de Começar</h1>
 
     <p class="mb-4">

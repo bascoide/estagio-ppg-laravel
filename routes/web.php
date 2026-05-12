@@ -10,6 +10,7 @@ use App\Http\Controllers\DocumentValidationController;
 use App\Http\Controllers\CoursesController;
 use App\Http\Controllers\LogsController;
 use App\Http\Controllers\ProfessorController;
+use App\Http\Controllers\UserSubmissionsController;
 
 // Public routes
 Route::get('/',  [AuthController::class, 'showLogin']);
@@ -27,11 +28,14 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 // Authenticated user routes
 Route::middleware(['auth.custom', 'no.cache', 'throttle:authenticated'])->group(function () {
     Route::get('/guia-form',   [FormController::class, 'index'])->name('guia-form');
+    Route::get('/minhas-submissoes', [UserSubmissionsController::class, 'index'])->name('user-submissions');
     Route::get('/form',        [FormController::class, 'form'])->name('form');
     Route::get('/get-form',    [FormController::class, 'generateForm'])->name('get-form');
     Route::post('/submit-form', [FormController::class, 'submitForm'])->middleware('throttle:uploads')->name('submit-form');
 
     Route::post('/print-pdf',       [DocumentController::class, 'printDocument'])->name('print-pdf');
+    Route::get('/download-final-document', [DocumentController::class, 'downloadFinalDocument'])->name('download-final-document');
+    Route::post('/view-user-plan',   [DocumentController::class, 'viewPlan'])->name('view-user-plan');
     Route::post('/print-document',   [DocumentController::class, 'printDocumentForm'])->name('print-document');
     Route::post('/print-addition',   [DocumentController::class, 'viewAddition'])->name('print-addition');
     Route::post('/download-docx',    [DocumentController::class, 'downloadDocument'])->name('download-docx');

@@ -12,10 +12,16 @@
 <body class="">
     <div class="flex p-5 bg-gray-200">
         <img src="{{ asset('images/logo.webp') }}" alt="logo" class="h-12 transition delay-150 duration-300 ease-in-out">
-        <div class="ml-auto">
+        <div class="ml-auto flex items-center gap-4">
             @if(session('user_id'))
+                @if(!session('admin'))
+                    <a href="{{ route('user-submissions') }}"
+                       class="text-gray-700 hover:text-blue-500 transition text-lg">
+                        Minhas submissões
+                    </a>
+                @endif
                 <a href="{{ route('logout') }}" class="flex items-center gap-1 group"
-                   onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                   onclick="event.preventDefault(); window.notifyLogoutTabs && window.notifyLogoutTabs(); document.getElementById('logout-form').submit();">
                     <img src="{{ asset('images/logout.webp') }}" alt="Logout"
                         class="w-8 h-8 transition duration-300 group-hover:brightness-150" />
                     <span class="text-gray-700 group-hover:text-blue-500 transition text-lg">Logout</span>
@@ -37,5 +43,6 @@
             <p>Todos os direitos reservados.</p>
         </div>
     </div>
+    <script src="{{ asset('js/sessionSync.js') }}"></script>
 </body>
 </html>

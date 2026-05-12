@@ -14,7 +14,7 @@
         <div class="ml-auto">
             @if(session('user_id'))
                 <a href="#" class="flex items-center gap-1 group"
-                   onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                   onclick="event.preventDefault(); window.notifyLogoutTabs && window.notifyLogoutTabs(); document.getElementById('logout-form').submit();">
                     <img src="{{ asset('images/logout.webp') }}" alt="Logout"
                         class="w-8 h-8 transition duration-300 group-hover:brightness-150" />
                     <span class="text-gray-700 group-hover:text-blue-500 transition text-lg">Logout</span>
@@ -37,5 +37,6 @@
             <p>Todos os direitos reservados.</p>
         </div>
     </div>
+    <script src="{{ asset('js/sessionSync.js') }}"></script>
 </body>
 </html>

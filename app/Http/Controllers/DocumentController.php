@@ -56,6 +56,32 @@ class DocumentController extends Controller
         
     }
 
+    public function downloadFinalDocument(Request $request)
+    {
+        $documentId = (int) $request->query('final_document_id', 0);
+
+        if ($documentId <= 0) {
+            abort(400, 'ID do documento nao fornecido');
+        }
+
+        $document = FinalDocument::find($documentId);
+
+        if (!$document) {
+            abort(404, 'Documento nao encontrado');
+        }
+
+        $this->authorizeFinalDocumentAccess($document);
+
+        $filePath = $this->resolvePublicUploadFile('uploads/generated_docs', (string) $document->pdf_path);
+        if (!file_exists($filePath)) {
+            abort(404, 'Documento nao encontrado');
+        }
+
+        return response()->download($filePath, basename($filePath), [
+            'Content-Type' => 'application/pdf',
+        ]);
+    }
+
     public function printDocumentForm(Request $request)
     {
         $documentId = $request->input('document_id');
@@ -179,7 +205,9 @@ class DocumentController extends Controller
                 abort(404, 'File not found');
             }
 
-            DB::table('submitted_plans')->where('id', $finalDocument->plan_id)->update(['verified' => true]);
+            if (session('admin')) {
+                DB::table('submitted_plans')->where('id', $finalDocument->plan_id)->update(['verified' => true]);
+            }
 
             return response()->file($filePath, [
                 'Content-Type' => 'application/pdf',
