@@ -414,9 +414,15 @@ class FormController extends Controller
             throw new Exception('LibreOffice não foi encontrado. Configure o comando soffice no PATH ou instale o LibreOffice.');
         }
 
+        $profileDir = storage_path('framework/libreoffice');
+        if (!is_dir($profileDir) && !mkdir($profileDir, 0775, true)) {
+            throw new Exception('Falha ao criar diretório temporário do LibreOffice.');
+        }
+
         $command = sprintf(
-            '%s --headless --convert-to pdf --outdir %s %s',
+            '%s -env:UserInstallation=%s --headless --convert-to pdf --outdir %s %s 2>&1',
             escapeshellarg($sofficeBinary),
+            escapeshellarg($this->pathToFileUri($profileDir)),
             escapeshellarg($outputDir),
             escapeshellarg($docxPath)
         );
@@ -441,6 +447,8 @@ class FormController extends Controller
     {
         $candidates = [
             'soffice',
+            '/usr/bin/soffice',
+            '/usr/local/bin/soffice',
             'C:\\Program Files\\LibreOffice\\program\\soffice.exe',
             'C:\\Program Files (x86)\\LibreOffice\\program\\soffice.exe',
             'C:\\Program Files\\OpenOffice 4\\program\\soffice.exe',
@@ -449,14 +457,20 @@ class FormController extends Controller
 
         foreach ($candidates as $candidate) {
             if ($candidate === 'soffice') {
-                @exec('where soffice', $output, $returnCode);
+                if (strncasecmp(PHP_OS, 'WIN', 3) === 0) {
+                    @exec('where soffice', $output, $returnCode);
+                } else {
+                    @exec('command -v soffice', $output, $returnCode);
+                }
+
                 if ($returnCode === 0 && !empty($output[0])) {
                     return trim($output[0]);
                 }
+
                 continue;
             }
 
-            if (is_file($candidate)) {
+            if (is_file($candidate) && is_executable($candidate)) {
                 return $candidate;
             }
         }
@@ -513,7 +527,7 @@ class FormController extends Controller
                         } elseif ($value === 'false') {
                             $value = '☐';
                         } else {
-                            $value = htmlspecialchars($value, ENT_XML1 | ENT_COMPAT, 'UTF-8');
+                            $value = htmlspecialchars($value, ENT_XML1 | ENT_COMPAT | ENT_SUBSTITUTE, 'UTF-8');
                         }
 
                         $processedXml = str_replace($fullPlaceholder, $value, $processedXml, $count);
@@ -530,6 +544,52 @@ class FormController extends Controller
         }
 
         $zip->close();
+        $this->validateDocxXml($outputPath, $filesToProcess);
+
         return $replaceCount > 0;
+    }
+
+    private function validateDocxXml(string $docxPath, array $filesToProcess): void
+    {
+        $zip = new ZipArchive();
+        if ($zip->open($docxPath) !== true) {
+            throw new Exception('Falha ao abrir ficheiro DOCX gerado para validação.');
+        }
+
+        $previous = libxml_use_internal_errors(true);
+
+        foreach ($filesToProcess as $fileName) {
+            $xml = $zip->getFromName($fileName);
+            if ($xml === false) continue;
+
+            libxml_clear_errors();
+            simplexml_load_string($xml);
+
+            $errors = libxml_get_errors();
+            if (!empty($errors)) {
+                $zip->close();
+                libxml_clear_errors();
+                libxml_use_internal_errors($previous);
+
+                $message = trim($errors[0]->message);
+                throw new Exception("DOCX gerado ficou com XML inválido em {$fileName}: {$message}");
+            }
+        }
+
+        $zip->close();
+        libxml_clear_errors();
+        libxml_use_internal_errors($previous);
+    }
+
+    private function pathToFileUri(string $path): string
+    {
+        $path = str_replace('\\', '/', $path);
+        $path = preg_replace('#/+#', '/', $path);
+
+        if (strncasecmp(PHP_OS, 'WIN', 3) === 0) {
+            return 'file:///' . ltrim(str_replace(' ', '%20', $path), '/');
+        }
+
+        return 'file://' . str_replace(' ', '%20', $path);
     }
 }

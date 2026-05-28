@@ -12,10 +12,17 @@ class TypeCourseSeeder extends Seeder
      */
     public function run(): void
     {
-        TypeCourse::create([
-            'name' => 'Licenciatura',
-        ]);
+        $types = [
+            'Licenciatura',
+            'Mestrado',
+            'Doutoramento',
+            'Pós-graduação',
+            'Curso Técnico',
+        ];
 
-        echo "TypeCourse 'Licenciatura' created successfully!\n";
+        foreach ($types as $name) {
+            TypeCourse::create(['name' => $name]);
+            echo "TypeCourse '{$name}' created successfully!\n";
+        }
     }
 }

@@ -318,12 +318,17 @@ class EmailService
         if (!$attachment) return false;
 
         $fullUrl = url('/president-upload-final-document-form') . '?uuid=' . $uuid;
+        $downloadUrl = asset('uploads/generated_docs/' . basename((string) $document->pdf_path));
 
         $html = $this->renderEmailTemplate(
             'Validação Presidencial',
             'Assinatura pendente do protocolo',
             '<p style="margin: 0 0 14px 0;">Em anexo encontra o protocolo para assinatura.</p>
-             <p style="margin: 0 0 14px 0;">Depois de assinar, submeta o documento final atraves do botão abaixo.</p>
+             <p style="margin: 0 0 14px 0;">Também pode descarregar o protocolo através do botão abaixo.</p>
+             <p style="margin: 18px 0 18px 0;">
+                <a href="' . htmlspecialchars($downloadUrl) . '" style="display: inline-block; background-color: #374151; color: #ffffff; text-decoration: none; padding: 12px 22px; border-radius: 6px; font-weight: 600;">Transferir protocolo</a>
+             </p>
+             <p style="margin: 0 0 14px 0;">Depois de assinar, submeta o documento final através do botão abaixo.</p>
              <p style="margin: 0;"><strong>Responsável pelo envio:</strong> ' . htmlspecialchars($adminName) . '</p>',
             'Submeter protocolo assinado',
             $fullUrl,
