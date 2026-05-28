@@ -292,17 +292,17 @@ class ProfessorController extends Controller
             ->toArray();
 
         if (empty($documents)) {
-            session()->flash('error', 'Este professor não tem nenhum aluno com documentos aceites ou válidos!');
+            session()->flash('error', 'Este professor não tem nenhum estudante com documentos aceites ou válidos!');
             return redirect()->route('professor-search');
         }
 
         $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
 
-        $sheet->setCellValue('A1', 'Status');
+        $sheet->setCellValue('A1', 'Estado');
         $sheet->setCellValue('B1', 'Data de Entrega');
         $sheet->setCellValue('C1', 'Nome do Aluno');
-        $sheet->setCellValue('D1', 'Email');
+        $sheet->setCellValue('D1', 'E-mail');
 
         $headerStyle = [
             'font' => ['bold' => true],

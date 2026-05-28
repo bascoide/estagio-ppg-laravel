@@ -3,7 +3,7 @@
 @section('content')
 <div class="flex-grow h-screen p-4 bg-white rounded shadow-md overflow-y-scroll">
     @include('messageError')
-    <h1 class="bold text-2xl mb-4">Professores</h1>
+    <h1 class="font-bold text-2xl mb-4">Professores</h1>
 
     <form method="GET" class="mb-6">
         <div class="flex flex-wrap items-center gap-4">

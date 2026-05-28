@@ -38,7 +38,7 @@ class CoursesController extends Controller
         if ($course) {
             $course->update(['is_active' => !$course->is_active]);
             (new LogsController())->logAction('edit-course');
-            return redirect('/courses')->with('message', 'Status do curso atualizado com sucesso!');
+            return redirect('/courses')->with('message', 'Estado do curso atualizado com sucesso!');
         }
 
         return redirect('/courses')->with('error', 'Erro ao atualizar status do curso');
@@ -77,7 +77,7 @@ class CoursesController extends Controller
         $newName = trim((string) $request->input('new_name'));
 
         if (!$id || $newName === '' || mb_strlen($newName) > 150) {
-            return redirect('/courses')->with('error', 'Nome do curso invalido');
+            return redirect('/courses')->with('error', 'Nome do curso inválido.');
         }
 
         $course = Course::find($id);

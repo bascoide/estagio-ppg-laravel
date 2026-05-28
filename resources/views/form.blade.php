@@ -58,6 +58,9 @@
         @endif
 
         <input type="hidden" name="document_id" value="{{ $documentId ?? '' }}">
+        @if((int) request()->input('filled_plan_id', 0) > 0)
+            <input type="hidden" name="filled_plan_id" value="{{ (int) request()->input('filled_plan_id', 0) }}">
+        @endif
 
         @php
             $current_group = 0;

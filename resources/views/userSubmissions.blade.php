@@ -16,7 +16,7 @@
     $statusDescriptions = [
         'Pendente' => 'A submissão aguarda análise.',
         'Aceite' => 'O documento foi aceite. Pode avançar para a próxima etapa indicada.',
-        'Recusado' => 'O documento precisa de ser corrigido e submetido novamente.',
+        'Recusado' => 'O documento tem de ser corrigido e submetido novamente.',
         'Por validar' => 'O documento assinado foi enviado e aguarda validação.',
         'Validado' => 'O processo foi validado e está concluído.',
         'Invalidado' => 'O documento assinado não foi validado.',
@@ -28,13 +28,17 @@
 <div class="max-w-7xl w-full p-4 sm:p-10 bg-white mt-10 shadow-lg sm:mx-10 mx-4 mb-10">
     @include('messageError')
 
-    <div class="mb-8">
-        <div>
+    <div class="mb-8 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+        <div class="max-w-3xl">
             <h1 class="text-3xl font-bold text-blue-900">As minhas submissões</h1>
             <p class="text-gray-600 mt-2">
                 Consulte os planos, protocolos e o estado atual de cada submissão.
             </p>
         </div>
+        <a href="{{ route('form') }}"
+            class="inline-flex h-11 w-full shrink-0 items-center justify-center rounded-md bg-blue-900 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800 md:w-auto">
+            Novo plano
+        </a>
     </div>
 
     <div class="md:flex gap-4 mb-8">
@@ -52,9 +56,9 @@
         </div>
     </div>
 
-    <form method="GET" action="{{ route('user-submissions') }}" class="mb-6">
-        <div class="md:flex items-end gap-3">
-            <div class="flex-1">
+    <form method="GET" action="{{ route('user-submissions') }}" class="mb-6 rounded-lg border border-gray-200 bg-gray-50 p-4">
+        <div class="flex flex-wrap items-center gap-4">
+            <div class="min-w-0 flex-1">
                 <label for="type" class="block text-sm text-gray-700 mb-1">Tipo</label>
                 <select id="type" name="type" class="w-full h-10 p-2 border rounded-lg">
                     <option value="">Todos</option>
@@ -62,7 +66,7 @@
                     <option value="Protocolo" {{ $type === 'Protocolo' ? 'selected' : '' }}>Protocolos</option>
                 </select>
             </div>
-            <div class="flex-1 mt-3 md:mt-0">
+            <div class="min-w-0 flex-1">
                 <label for="status" class="block text-sm text-gray-700 mb-1">Estado</label>
                 <select id="status" name="status" class="w-full h-10 p-2 border rounded-lg">
                     <option value="">Todos</option>
@@ -71,7 +75,7 @@
                     @endforeach
                 </select>
             </div>
-            <div class="flex gap-2 mt-6">
+            <div class="flex flex-wrap items-center gap-2">
                 <button type="submit" class="h-10 px-5 text-white bg-blue-900 rounded hover:bg-blue-800 cursor-pointer">
                     Filtrar
                 </button>
@@ -82,7 +86,7 @@
         </div>
     </form>
 
-    <div class="border border-gray-200 rounded overflow-hidden">
+    <div id="submissions-documents" class="border border-gray-200 rounded overflow-hidden">
         @forelse($submissions as $submission)
             @php
                 $document = $submission->document;
@@ -110,7 +114,7 @@
                             <form method="POST" action="{{ route('print-pdf') }}" target="_blank">
                                 @csrf
                                 <input type="hidden" name="final_document_id" value="{{ $submission->id }}">
-                                <button type="submit" class="px-4 py-2 border border-blue-400 text-blue-900 rounded hover:bg-blue-100 cursor-pointer">
+                                <button type="submit" class="px-4 py-2 border border-blue-400 text-blue-900 rounded hover:bg-gray-100 cursor-pointer">
                                     Ver documento
                                 </button>
                             </form>
@@ -140,12 +144,21 @@
                                 Criar protocolo
                             </a>
                         @endif
+
+                        <form method="POST" action="{{ route('user-submissions.destroy', $submission) }}"
+                            onsubmit="return confirm('Tem a certeza que pretende eliminar este documento? Esta ação não pode ser anulada.');">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="px-4 py-2 border border-red-300 text-red-700 rounded hover:bg-red-50 cursor-pointer">
+                                Eliminar
+                            </button>
+                        </form>
                     </div>
                 </div>
             </div>
         @empty
             <div class="p-10 text-center">
-                <h2 class="text-xl font-bold text-gray-800 mb-5">Ainda não existem submissões</h2>
+                <h2 class="text-xl font-bold text-gray-800 mb-4">Ainda não existem submissões</h2>
                 <p class="text-gray-600 mb-8">Quando submeter um plano ou protocolo, ele aparecerá nesta área.</p>
                 <a href="{{ route('form') }}"
                     class="inline-block px-5 py-2 text-white bg-blue-900 rounded-md hover:bg-blue-800">
@@ -155,7 +168,7 @@
         @endforelse
     </div>
 
-    <div class="mt-8 p-4 border-l-4 border-blue-400 bg-blue-50 rounded">
+    <div class="mt-8 p-4 border-l-4 border-blue-400 bg-blue-100 rounded">
         <h2 class="text-lg font-bold text-blue-900 mb-2">Guia rápido dos estados</h2>
         <ul class="list-disc ml-6 text-gray-700 space-y-1">
             <li><strong>Pendente:</strong> o documento foi submetido e aguarda análise.</li>
@@ -166,4 +179,6 @@
         </ul>
     </div>
 </div>
+
+<script src="{{ asset('js/submissionsRefresh.js') }}" data-target="#submissions-documents" data-interval="5000"></script>
 @endsection

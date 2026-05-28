@@ -3,7 +3,7 @@
 @section('content')
 <div class="flex-grow h-screen p-4 bg-white rounded shadow-md overflow-y-scroll">
     @include('messageError')
-    <h1 class="bold text-2xl">Documentos do Utilizador</h1>
+    <h1 class="font-bold text-2xl">Documentos do Utilizador</h1>
     <h2 class="text-gray-600 mt-2">{{ $userName }}</h2>
     <br>
 
@@ -29,7 +29,7 @@
                 <option value="date_oldest" {{ request('order_by') === 'date_oldest' ? 'selected' : '' }}>Mais antigos</option>
             </select>
             <select name="status" class="border p-2 rounded">
-                <option value="">Status...</option>
+                <option value="">Estado...</option>
                 @foreach(['Pendente', 'Aceite', 'Recusado', 'Por validar', 'Validado', 'Invalidado', 'Inativo'] as $statusOption)
                     <option value="{{ $statusOption }}" {{ request('status') === $statusOption ? 'selected' : '' }}>{{ $statusOption }}</option>
                 @endforeach
@@ -110,7 +110,7 @@
                                     <input type="hidden" name="presidencial_email" class="hidden_presidencial_email">
                                     <button class="bg-green-500 text-white rounded p-2 w-10 h-10 cursor-pointer hover:bg-green-600"
                                         onclick="validateDocument({{ $document['final_document_id'] }}, event)">
-                                        ✔
+                                        ✓
                                     </button>
                                 </form>
                                 <form method="POST" action="{{ route('invalidate-document') }}"
@@ -121,7 +121,7 @@
                                     <input type="hidden" name="rejection_reason" id="rejectionReason{{ $document['final_document_id'] }}" value="">
                                     <button class="bg-red-500 text-white rounded p-2 w-10 cursor-pointer h-10 hover:bg-red-600"
                                         onclick="rejectDocument({{ $document['final_document_id'] }}, event)">
-                                        ❌
+                                        ✕
                                     </button>
                                 </form>
                             </div>

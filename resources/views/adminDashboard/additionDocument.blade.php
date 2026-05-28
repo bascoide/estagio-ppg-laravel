@@ -7,14 +7,14 @@
     @if($finalDocumentId)
         <form action="{{ route('addition-document') }}" method="POST" enctype="multipart/form-data">
             @csrf
-            <h1 class="bold text-2xl">Aditamentos</h1>
+            <h1 class="font-bold text-2xl">Aditamentos</h1>
 
-            <input type="text" placeholder="Nome do aditamento" class="mt-4 border-s border-grey-100 p-2 bg-gray-100 w-full"
+            <input type="text" placeholder="Nome do aditamento" class="mt-4 border-s border-gray-300 p-2 bg-gray-100 w-full"
                 id="documentName" name="addition_name" required>
             <br><br>
 
             <div class="flex items-center">
-                <label for="documentFile">Upload documento:</label>
+                <label for="documentFile">Carregar documento:</label>
                 <input type="file"
                     class="ml-2 border p-1 cursor-pointer hover:bg-gray-300 rounded-lg border-gray-300 bg-gray-200"
                     id="documentFile" name="documentFile" accept=".pdf" required>
@@ -23,7 +23,7 @@
             <input type="hidden" name="final_document_id" value="{{ $finalDocumentId }}">
 
             <button type="submit"
-                    class="mt-4 p-2 bg-blue-500 w-full cursor-pointer hover:bg-blue-600 text-white">Upload</button>
+                    class="mt-4 p-2 bg-blue-500 w-full cursor-pointer hover:bg-blue-600 text-white">Carregar</button>
         </form>
         <ul class="mt-4">
             @if(count($additions) > 0)
@@ -47,8 +47,8 @@
             @endif
         </ul>
     @else
-        <div class="p-4 bg-yellow-100 border border-yellow-400 rounded">
-            <p class="text-yellow-800">Nenhum documento foi selecionado. Por favor, selecione um documento validado para fazer aditamentos.</p>
+        <div class="p-4 bg-gray-100 border border-gray-300 rounded">
+            <p class="text-yellow-800">Nenhum documento foi selecionado. Selecione um documento validado para criar aditamentos.</p>
         </div>
     @endif
 </div>

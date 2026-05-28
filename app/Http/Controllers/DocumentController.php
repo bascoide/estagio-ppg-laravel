@@ -61,20 +61,25 @@ class DocumentController extends Controller
         $documentId = (int) $request->query('final_document_id', 0);
 
         if ($documentId <= 0) {
-            abort(400, 'ID do documento nao fornecido');
+            return redirect()->route('user-submissions')->with('error', 'Documento inválido ou indisponível.');
         }
 
         $document = FinalDocument::find($documentId);
 
         if (!$document) {
-            abort(404, 'Documento nao encontrado');
+            return redirect()->route('user-submissions')->with('error', 'Este documento já não está disponível.');
         }
 
         $this->authorizeFinalDocumentAccess($document);
 
-        $filePath = $this->resolvePublicUploadFile('uploads/generated_docs', (string) $document->pdf_path);
+        try {
+            $filePath = $this->resolvePublicUploadFile('uploads/generated_docs', (string) $document->pdf_path);
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            return redirect()->route('user-submissions')->with('error', 'O ficheiro deste documento já não está disponível.');
+        }
+
         if (!file_exists($filePath)) {
-            abort(404, 'Documento nao encontrado');
+            return redirect()->route('user-submissions')->with('error', 'O ficheiro deste documento já não está disponível.');
         }
 
         return response()->download($filePath, basename($filePath), [
@@ -196,7 +201,7 @@ class DocumentController extends Controller
             }
 
             if ($planId <= 0 || $planId !== (int) $finalDocument->plan_id) {
-                abort(400, 'Plano invalido');
+                abort(400, 'Plano inválido');
             }
 
             $this->authorizeFinalDocumentAccess($finalDocument);
@@ -246,7 +251,7 @@ class DocumentController extends Controller
     private function authorizeFinalDocumentAccess(?FinalDocument $finalDocument): void
     {
         if (!$finalDocument) {
-            abort(404, 'Documento nÃ£o encontrado');
+            abort(404, 'Documento não encontrado');
         }
 
         if (session('admin')) {
@@ -254,7 +259,7 @@ class DocumentController extends Controller
         }
 
         if ((int) session('user_id') !== (int) $finalDocument->user_id) {
-            abort(403, 'NÃ£o tem permissÃ£o para aceder a este documento.');
+            abort(403, 'Não tem permissão para aceder a este documento.');
         }
     }
 
@@ -310,7 +315,7 @@ class DocumentController extends Controller
 
             foreach ($selectedCourseTypes as $typeId) {
                 if (!TypeCourse::find($typeId)) {
-                    throw new Exception('Tipo de curso com ID ' . $typeId . ' nao encontrado!');
+                    throw new Exception('Tipo de curso com ID ' . $typeId . ' não encontrado!');
                 }
             }
 
@@ -319,7 +324,7 @@ class DocumentController extends Controller
             $file = $request->file('documentFile');
 
             if (!in_array($documentType, ['Plano', 'Protocolo'], true)) {
-                throw new Exception('Tipo de documento invalido.');
+                throw new Exception('Tipo de documento inválido.');
             }
 
             if (!$file->isValid() || strtolower($file->getClientOriginalExtension()) !== 'docx') {
@@ -329,7 +334,7 @@ class DocumentController extends Controller
             $fileName = $this->sanitizeDocumentFileName($documentName);
             $targetPath = $uploadDir . $fileName;
             if (file_exists($targetPath)) {
-                throw new Exception('Ja existe um ficheiro com esse nome.');
+                throw new Exception('Já existe um ficheiro com esse nome.');
             }
 
             $file->move($uploadDir, $fileName);
@@ -376,7 +381,7 @@ class DocumentController extends Controller
         $baseName = trim($baseName, " ._\t\n\r\0\x0B");
 
         if ($baseName === '') {
-            throw new Exception('Nome do documento invalido.');
+            throw new Exception('Nome do documento inválido.');
         }
 
         $reservedNames = [
@@ -386,7 +391,7 @@ class DocumentController extends Controller
         ];
 
         if (in_array(strtoupper($baseName), $reservedNames, true)) {
-            throw new Exception('Nome do documento invalido.');
+            throw new Exception('Nome do documento inválido.');
         }
 
         return $baseName . '.docx';

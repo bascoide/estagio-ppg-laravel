@@ -13,7 +13,7 @@
                 </p>
             </div>
             <a href="{{ route('user-submissions') }}"
-                class="inline-block mt-4 sm:mt-0 px-5 py-2 text-white bg-blue-900 rounded-md hover:bg-blue-800 transition-colors duration-200">
+                class="inline-block mt-4 md:mt-0 px-5 py-2 text-white bg-blue-900 rounded-md hover:bg-blue-800 transition-colors duration-200">
                 Ver submissões
             </a>
         </div>

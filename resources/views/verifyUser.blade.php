@@ -9,7 +9,7 @@
 
 <div class="max-w-3xl w-full sm:p-10 p-6 bg-white mt-10 shadow-lg sm:mx-10 mx-4 mb-10">
     <div class="text-center">
-        <h3 class="bold text-2xl text-gray-900">Verificação de Conta</h3>
+        <h3 class="font-bold text-2xl text-gray-900">Verificação de Conta</h3>
         <p class="mt-2 text-gray-600">
             @if($isSuccess)
                 A sua conta foi confirmada com sucesso.

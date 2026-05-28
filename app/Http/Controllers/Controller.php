@@ -7,17 +7,17 @@ abstract class Controller
     protected function resolvePublicUploadFile(string $directory, string $fileName): string
     {
         if ($fileName === '' || basename($fileName) !== $fileName) {
-            abort(404, 'Ficheiro nao encontrado');
+            abort(404, 'Ficheiro não encontrado');
         }
 
         $basePath = realpath(public_path($directory));
         if ($basePath === false) {
-            abort(404, 'Diretorio nao encontrado');
+            abort(404, 'Diretório não encontrado');
         }
 
         $filePath = realpath($basePath . DIRECTORY_SEPARATOR . $fileName);
         if ($filePath === false || !$this->isPathInside($filePath, $basePath)) {
-            abort(404, 'Ficheiro nao encontrado');
+            abort(404, 'Ficheiro não encontrado');
         }
 
         return $filePath;
@@ -37,14 +37,14 @@ abstract class Controller
         }
 
         if (!$isAllowed || in_array('..', explode('/', $normalizedPath), true)) {
-            abort(404, 'Ficheiro nao encontrado');
+            abort(404, 'Ficheiro não encontrado');
         }
 
         $publicPath = realpath(public_path());
         $filePath = realpath(public_path($normalizedPath));
 
         if ($publicPath === false || $filePath === false || !$this->isPathInside($filePath, $publicPath)) {
-            abort(404, 'Ficheiro nao encontrado');
+            abort(404, 'Ficheiro não encontrado');
         }
 
         return $filePath;

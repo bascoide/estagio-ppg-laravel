@@ -4,7 +4,7 @@
 <div class="flex-grow h-screen p-4 bg-white rounded shadow-md overflow-y-scroll">
     @include('messageError')
 
-    <h1 class="bold text-2xl mb-4">Protocolos Por Validar</h1>
+    <h1 class="font-bold text-2xl mb-4">Protocolos Por Validar</h1>
     <div class="flex gap-1">
         <select class="border p-2 rounded w-1/3 h-10" id="presidential_email">
             <option>Selecione um email presidencial</option>

@@ -4,11 +4,11 @@
 <div class="flex-grow h-screen p-4 bg-white rounded shadow-md overflow-y-scroll">
     @include('messageError')
 
-    <h1 class="bold text-2xl mb-4">Protocolos Validados</h1>
+    <h1 class="font-bold text-2xl mb-4">Protocolos Validados</h1>
 
     <h3 class="text-lg text-blue-800 mb-2">Quantidade de Protocolos</h3>
     <form method="GET" class="mb-4" id="filterForm">
-        <select name="course_id" id="course" class="border-s border-grey-100 p-2 bg-gray-100" required>
+        <select name="course_id" id="course" class="border-s border-gray-300 p-2 bg-gray-100" required>
             <option value="">Selecione um curso</option>
             @foreach($courses as $course)
                 <option value="{{ $course['id'] }}" {{ request('course_id') == $course['id'] ? 'selected' : '' }}>
@@ -16,14 +16,14 @@
                 </option>
             @endforeach
         </select>
-        <select id="year_type" name="year_type" class="border-s border-grey-100 p-2 bg-gray-100"
+        <select id="year_type" name="year_type" class="border-s border-gray-300 p-2 bg-gray-100"
             onchange="toggleYearSelect()">
             <option value="">Selecione o tipo de ano</option>
             <option value="civil" {{ request('year_type') == 'civil' ? 'selected' : '' }}>Ano Civil</option>
             <option value="school" {{ request('year_type') == 'school' ? 'selected' : '' }}>Ano Letivo</option>
         </select>
         <select name="civil_year" id="civil_year"
-            class="border-s border-grey-100 p-2 bg-gray-100 {{ (!request('year_type') || request('year_type') == 'school') ? 'hidden' : '' }}"
+            class="border-s border-gray-300 p-2 bg-gray-100 {{ (!request('year_type') || request('year_type') == 'school') ? 'hidden' : '' }}"
             {{ request('year_type') == 'civil' ? 'required' : '' }}>
             <option value="">Selecione o ano civil</option>
             @foreach($civilYears as $year)
@@ -33,7 +33,7 @@
             @endforeach
         </select>
         <select name="school_year" id="school_year"
-            class="border-s border-grey-100 p-2 bg-gray-100 {{ (!request('year_type') || request('year_type') == 'civil') ? 'hidden' : '' }}"
+            class="border-s border-gray-300 p-2 bg-gray-100 {{ (!request('year_type') || request('year_type') == 'civil') ? 'hidden' : '' }}"
             {{ request('year_type') == 'school' ? 'required' : '' }}>
             <option value="">Selecione o ano letivo</option>
             @foreach($schoolYears as $year)

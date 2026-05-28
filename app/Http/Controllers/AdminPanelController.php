@@ -25,12 +25,12 @@ class AdminPanelController extends Controller
             $password = $request->input('password', '');
 
             if (empty($email) || empty($password)) {
-                return back()->with('error', 'Email e senha são obrigatórios!');
+                return back()->with('error', 'E-mail e palavra-passe são obrigatórios!');
             }
 
             try {
                 if (User::where('email', $email)->exists()) {
-                    return back()->with('error', 'Email já está registado!');
+                    return back()->with('error', 'E-mail já registado!');
                 }
 
                 User::create([
@@ -79,12 +79,12 @@ class AdminPanelController extends Controller
         $documentId      = (int) $request->query('document_id', 0);
 
         if (!$finalDocumentId || !$documentId) {
-            return redirect('/show-documents')->with('error', "ID's inválidos");
+            return redirect('/show-documents')->with('error', "IDs inválidos");
         }
 
         $finalDocument = FinalDocument::find($finalDocumentId);
         if (!$finalDocument) {
-            return redirect('/show-documents')->with('error', 'Documento nÃ£o encontrado');
+            return redirect('/show-documents')->with('error', 'Documento não encontrado');
         }
 
         $status        = $finalDocument->status;
@@ -355,7 +355,7 @@ class AdminPanelController extends Controller
             try {
                 $finalDocumentId = (int) $request->input('final_document_id');
                 if (!FinalDocument::find($finalDocumentId)) {
-                    throw new Exception('Documento final nao encontrado');
+                    throw new Exception('Documento final não encontrado');
                 }
 
                 $file = $request->file('documentFile');
@@ -373,7 +373,7 @@ class AdminPanelController extends Controller
 
                 $additionName = trim((string) $request->input('addition_name', 'Adicionamento'));
                 if ($additionName === '' || mb_strlen($additionName) > 150) {
-                    throw new Exception('Nome do adicionamento invalido');
+                    throw new Exception('Nome do aditamento inválido.');
                 }
 
                 \App\Models\Addition::create([
@@ -453,7 +453,7 @@ class AdminPanelController extends Controller
                             $status === 'Recusado' ? 'rejected' : 'accepted',
                             $rejectionReason
                         )) {
-                            throw new Exception('Falha ao enviar email de notificaÃ§Ã£o.');
+                            throw new Exception('Falha ao enviar e-mail de notificação.');
                         }
                     }
                 }
@@ -467,9 +467,9 @@ class AdminPanelController extends Controller
                 (new LogsController())->logAction('edit-document', $finalDocumentId);
                 if (in_array($status, ['Aceite', 'Recusado'], true)) {
                     return redirect(session('document_return_url', route('view-pending-documents')))
-                        ->with('message', 'Status atualizado com sucesso!');
+                        ->with('message', 'Estado atualizado com sucesso!');
                 }
-                return back()->with('message', 'Status atualizado com sucesso!');
+                return back()->with('message', 'Estado atualizado com sucesso!');
             }
 
             // Criar nova versão com campos alterados
@@ -491,7 +491,7 @@ class AdminPanelController extends Controller
                         $status === 'Recusado' ? 'rejected' : 'accepted',
                         $rejectionReason, $rejectedFields
                     )) {
-                        throw new Exception('Falha ao enviar email de notificaÃ§Ã£o.');
+                        throw new Exception('Falha ao enviar e-mail de notificação.');
                     }
                 }
             }
@@ -534,7 +534,7 @@ class AdminPanelController extends Controller
             $finalDocumentId = (int) $request->input('final_document_id');
             $finalDocument = FinalDocument::find($finalDocumentId);
             if (!$finalDocument) {
-                throw new Exception('Documento nÃ£o encontrado');
+                throw new Exception('Documento não encontrado');
             }
 
             $userEmail = $this->getDocumentUserEmail($finalDocument);
@@ -606,7 +606,7 @@ class AdminPanelController extends Controller
     {
         $courseId = $finalDocument->user->course_id ?? null;
         if (!$courseId) {
-            throw new Exception('Curso do aluno nÃ£o encontrado');
+            throw new Exception('Curso do estudante não encontrado');
         }
 
         $professor = Professor::firstOrCreate(['name' => $professorName]);

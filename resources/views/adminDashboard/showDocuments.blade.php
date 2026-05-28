@@ -3,7 +3,7 @@
 @section('content')
 <div class="flex-grow h-screen p-4 bg-white rounded shadow-md overflow-y-scroll">
     @include('messageError')
-    <h1 class="bold text-2xl">Documentos</h1>
+    <h1 class="font-bold text-2xl">Documentos</h1>
     <br>
 
     <form method="GET">
@@ -50,7 +50,7 @@
                             @csrf
                             <input type="hidden" name="id" value="{{ $document['id'] }}">
                             <button type="submit">
-                                <img class="h-10 cursor-pointer" src="{{ asset('images/download_icon.webp') }}" title="Download do docx">
+                                <img class="h-10 cursor-pointer" src="{{ asset('images/download_icon.webp') }}" title="Descarregar DOCX">
                             </button>
                         </form>
                         @if($document['is_active'] == 1)

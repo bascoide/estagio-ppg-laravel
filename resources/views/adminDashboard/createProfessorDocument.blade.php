@@ -3,7 +3,7 @@
 @section('content')
 <div class="flex-grow h-screen p-4 bg-white rounded shadow-md overflow-y-auto">
     @include('messageError')
-    <h1 class="bold text-2xl mb-4">Professor</h1>
+    <h1 class="font-bold text-2xl mb-4">Professor</h1>
     <h2 class="text-lg text-gray-700 mb-6">{{ $professor['name'] ?? '' }}</h2>
 
     <form action="{{ route('create-report') }}" method="POST" class="space-y-4">
@@ -47,7 +47,7 @@
         <input type="hidden" value="{{ $professor['id'] ?? '' }}" name="professor_id">
         <input type="hidden" value="{{ $professor['name'] ?? '' }}" name="teacher_name">
         <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
-            Gerar excel do estado dos alunos
+            Gerar Excel do estado dos estudantes
         </button>
     </form>
 </div>

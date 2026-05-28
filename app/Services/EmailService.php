@@ -202,7 +202,7 @@ class EmailService
             'blue'
         );
 
-        return $this->send($userEmail, 'Verificação da sua Conta', $html, true, [], $this->config['from_email']);
+        return $this->send($userEmail, 'Verificação da sua conta', $html, true, [], $this->config['from_email']);
     }
 
     public function sendAcceptedEmail(string $userEmail, int $finalDocumentId): bool
@@ -227,7 +227,7 @@ class EmailService
             'green'
         );
 
-        return $this->send($userEmail, 'O Seu Protocolo foi Aprovado', $html, true, [$attachment], $this->config['from_email']);
+        return $this->send($userEmail, 'O seu protocolo foi aprovado', $html, true, [$attachment], $this->config['from_email']);
     }
 
     public function sendRejectedEmail(string $userEmail, int $finalDocumentId, string $rejectionReason = '', array $rejectedFields = []): bool
@@ -256,7 +256,7 @@ class EmailService
             'red'
         );
 
-        return $this->send($userEmail, 'O Seu Protocolo foi Rejeitado', $html, true, [$attachment], $this->config['from_email']);
+        return $this->send($userEmail, 'O seu protocolo foi rejeitado', $html, true, [$attachment], $this->config['from_email']);
     }
 
     private function finalDocumentAttachment(FinalDocument $document): ?array
@@ -306,7 +306,7 @@ class EmailService
             'red'
         );
 
-        return $this->send($userEmail, 'O Seu Protocolo foi Invalidado', $html, true, [$attachment], $this->config['from_email']);
+        return $this->send($userEmail, 'O seu protocolo foi invalidado', $html, true, [$attachment], $this->config['from_email']);
     }
 
     public function sendPresidentialValidationEmail(string $presidentEmail, int $finalDocumentId, string $adminName, string $uuid): bool
@@ -345,7 +345,7 @@ class EmailService
         $html = $this->renderEmailTemplate(
             'Gestão de Protocolos',
             'Protocolo validado',
-            '<p style="margin: 0 0 14px 0;">O seu protocolo foi <strong>aprovado</strong> e finalizado com sucesso.</p>
+            '<p style="margin: 0 0 14px 0;">O seu protocolo foi <strong>aprovado</strong> e concluído com sucesso.</p>
              <p style="margin: 0;">O documento final segue em anexo para consulta.</p>',
             null,
             null,
@@ -353,7 +353,7 @@ class EmailService
             'green'
         );
 
-        return $this->send($userEmail, 'O Seu Protocolo foi Validado', $html, true, [$attachment], $this->config['from_email']);
+        return $this->send($userEmail, 'O seu protocolo foi validado', $html, true, [$attachment], $this->config['from_email']);
     }
 
     public function sendCancelledEmail(string $userEmail, int $finalDocumentId): bool
@@ -375,7 +375,7 @@ class EmailService
             'gray'
         );
 
-        return $this->send($userEmail, 'O Seu Protocolo foi Anulado', $html, true, [$attachment], $this->config['from_email']);
+        return $this->send($userEmail, 'O seu protocolo foi anulado', $html, true, [$attachment], $this->config['from_email']);
     }
 
     public function sendPlanEmail(string $userEmail, int $finalDocumentId): bool
@@ -404,6 +404,6 @@ class EmailService
             'blue'
         );
 
-        return $this->send($userEmail, 'O Seu Plano está Pendente', $html, true, [$attachment], $this->config['from_email']);
+        return $this->send($userEmail, 'O seu plano está pendente', $html, true, [$attachment], $this->config['from_email']);
     }
 }

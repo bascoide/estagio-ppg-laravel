@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
 use App\Models\Course;
+use App\Models\User;
 use App\Services\EmailService;
 use Exception;
 use Illuminate\Http\Request;
@@ -22,22 +22,22 @@ class AuthController extends Controller
         $password = $request->input('password', '');
 
         if (empty($email) || empty($password)) {
-            return back()->with('error', 'Email e senha são obrigatórios!');
+            return back()->with('error', 'E-mail e palavra-passe são obrigatórios!');
         }
 
         try {
             $user = User::where('email', $email)->first();
 
             if (!$user) {
-                return back()->with('error', 'Email ou senha inválidos!');
+                return back()->with('error', 'E-mail ou palavra-passe inválidos!');
             }
 
             if (!$user->verified) {
-                return back()->with('error', 'Verifique a sua conta primeiro! Use o link enviado no seu email.');
+                return back()->with('error', 'Verifique primeiro a sua conta. Use o link enviado para o seu e-mail.');
             }
 
             if (!Hash::check($password, $user->password)) {
-                return back()->with('error', 'Email ou senha inválidos!');
+                return back()->with('error', 'E-mail ou palavra-passe inválidos!');
             }
 
             $request->session()->regenerate();
@@ -49,7 +49,7 @@ class AuthController extends Controller
 
             return redirect('/guia-form');
         } catch (Exception $e) {
-            return back()->with('error', 'Erro ao fazer login: ' . $e->getMessage());
+            return back()->with('error', 'Erro ao iniciar sessão: ' . $e->getMessage());
         }
     }
 
@@ -62,26 +62,26 @@ class AuthController extends Controller
 
     public function register(Request $request)
     {
-        $name     = trim((string) $request->input('name', ''));
-        $email    = strtolower(trim((string) $request->input('email', '')));
-        $password = $request->input('password', '');
+        $name         = trim((string) $request->input('name', ''));
+        $email        = strtolower(trim((string) $request->input('email', '')));
+        $password     = $request->input('password', '');
         $courseTypeId = (int) $request->input('CourseType', 0);
-        $courseId = (int) $request->input('Course', 0);
+        $courseId     = (int) $request->input('Course', 0);
 
         if (empty($name) || empty($email) || empty($password)) {
-            return back()->with('error', 'Email e senha são obrigatórios!');
+            return back()->with('error', 'Nome, e-mail e palavra-passe são obrigatórios!');
         }
 
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            return back()->with('error', 'Email invalido!');
+            return back()->with('error', 'E-mail inválido!');
         }
 
         if (strlen((string) $password) < 8) {
-            return back()->with('error', 'A senha deve ter pelo menos 8 caracteres!');
+            return back()->with('error', 'A palavra-passe deve ter pelo menos 8 caracteres!');
         }
 
         if (!preg_match('/@iscap\.ipp\.pt$/i', $email)) {
-            return back()->with('error', 'Apenas emails com domínio @iscap.ipp.pt são permitidos!');
+            return back()->with('error', 'Apenas e-mails com domínio @iscap.ipp.pt são permitidos!');
         }
 
         $course = Course::where('id', $courseId)
@@ -90,7 +90,7 @@ class AuthController extends Controller
             ->first();
 
         if (!$course) {
-            return back()->with('error', 'Curso invÃ¡lido ou inativo para o tipo de curso selecionado!');
+            return back()->with('error', 'Curso inválido ou inativo para o tipo de curso selecionado!');
         }
 
         $hashedPassword = Hash::make($password);
@@ -99,7 +99,7 @@ class AuthController extends Controller
             $existingUser = User::where('email', $email)->first();
 
             if ($existingUser && $existingUser->verified) {
-                return back()->with('error', 'Email já está registado!');
+                return back()->with('error', 'E-mail já registado!');
             }
 
             if ($existingUser && !$existingUser->verified) {
@@ -124,7 +124,7 @@ class AuthController extends Controller
 
             (new EmailService())->sendConfirmationCode($email, $verificationCode);
 
-            return redirect('/login')->with('message', 'Utilizador criado com sucesso! Verifique o seu email para acabar a verificação.');
+            return redirect('/login')->with('message', 'Utilizador criado com sucesso. Verifique o seu e-mail para concluir a verificação.');
         } catch (Exception $e) {
             return back()->with('error', 'Erro ao criar utilizador: ' . $e->getMessage());
         }
@@ -136,7 +136,7 @@ class AuthController extends Controller
         $verificationCode = $request->query('verification_code', '');
 
         if (empty($email) || empty($verificationCode)) {
-            return view('verifyUser')->with('error', 'Link inválido');
+            return view('verifyUser')->with('error', 'Link inválido.');
         }
 
         $updated = User::where('email', $email)
@@ -147,7 +147,7 @@ class AuthController extends Controller
             return view('verifyUser')->with('message', 'Conta verificada com sucesso!');
         }
 
-        return view('verifyUser')->with('error', 'Erro ao verificar conta.');
+        return view('verifyUser')->with('error', 'Erro ao verificar a conta.');
     }
 
     public function logout(Request $request)
@@ -168,7 +168,7 @@ class AuthController extends Controller
         if ($request->has('admin_name')) {
             $adminName = trim((string) $request->input('admin_name'));
             if ($adminName === '' || mb_strlen($adminName) > 100) {
-                return back()->with('error', 'Nome invalido.');
+                return back()->with('error', 'Nome inválido.');
             }
 
             session(['admin_name' => $adminName]);

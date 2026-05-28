@@ -1,9 +1,9 @@
 @extends('layouts.admin')
 
 @section('content')
-<div class="flex-grow h-screen p-4 bg-white rounded shadow-md grow-y-0 overflow-y-scroll">
+<div class="flex-grow h-screen p-4 bg-white rounded shadow-md  overflow-y-scroll">
     @include('messageError')
-    <h1 class="bold text-2xl mb-4">Cursos</h1>
+    <h1 class="font-bold text-2xl mb-4">Cursos</h1>
 
     <h3 class="text-lg text-blue-800 mb-2">Adicionar curso</h3>
     <form method="POST" action="{{ route('add-course') }}" class="flex gap-4">
@@ -49,7 +49,7 @@
             <thead>
                 <tr>
                     <th class="py-2 px-4 border-b border-gray-200 bg-gray-50 text-left">Nome do Curso</th>
-                    <th class="py-2 px-4 border-b border-gray-200 bg-gray-50 text-left">Status</th>
+                    <th class="py-2 px-4 border-b border-gray-200 bg-gray-50 text-left">Estado</th>
                     <th class="py-2 px-4 border-b border-gray-200 bg-gray-50 text-left">Ações</th>
                 </tr>
             </thead>

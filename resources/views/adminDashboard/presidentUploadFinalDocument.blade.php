@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="max-w-3xl w-full p-10 bg-white mt-10 shadow-lg mx-10 mb-10">
-    <h3 class="bold text-2xl">Upload</h3>
+    <h3 class="font-bold text-2xl">Carregar documento</h3>
 
     @if(empty($uuid))
         @if(!session('message') && !session('error'))
@@ -14,7 +14,7 @@
 
         <form method="POST" action="{{ route('president-final-document') }}" enctype="multipart/form-data">
             @csrf
-            <label for="document">Upload documento assinado (.pdf):</label>
+            <label for="document">Carregar documento assinado (.pdf):</label>
             <input type="file" class="border p-1 cursor-pointer hover:bg-gray-300 rounded-lg border-gray-300 bg-gray-200"
                 id="document" name="document" accept=".pdf" required>
             <br>

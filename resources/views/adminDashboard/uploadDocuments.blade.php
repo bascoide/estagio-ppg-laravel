@@ -3,19 +3,19 @@
 @section('content')
 <div class="flex-grow h-screen p-4 bg-white rounded shadow-md overflow-y-scroll">
     @include('messageError')
-    <h1 class="bold text-2xl">Upload Documento</h1>
+    <h1 class="font-bold text-2xl">Carregar documento</h1>
     <br>
 
     <form action="{{ route('upload-document') }}" method="POST" enctype="multipart/form-data">
         @csrf
-        <input type="text" placeholder="Nome do documento" class="mt-4 border-s border-grey-100 p-2 bg-gray-100 w-full"
+        <input type="text" placeholder="Nome do documento" class="mt-4 border-s border-gray-300 p-2 bg-gray-100 w-full"
             id="documentName" name="documentName" required>
         <br><br>
 
         <div class="flex flex-col gap-6">
             <div class="flex items-center gap-8">
                 <div class="flex items-center">
-                    <label for="documentFile">Upload documento Word (.docx):</label>
+                    <label for="documentFile">Carregar documento Word (.docx):</label>
                     <input type="file"
                         class="ml-2 border p-1 cursor-pointer hover:bg-gray-300 rounded-lg border-gray-300 bg-gray-200"
                         id="documentFile" name="documentFile" accept=".docx" required>
@@ -47,7 +47,7 @@
                 <div class="flex items-center gap-2">
                     <input type="checkbox" class="border p-1 cursor-pointer hover:bg-gray-300 rounded-lg border-gray-300 bg-gray-200"
                         id="documentPosGraduacao" name="courseTypes[]" value="3">
-                    <label for="documentPosGraduacao" class="cursor-pointer">Pós-Graduação</label>
+                    <label for="documentPosGraduacao" class="cursor-pointer">P&oacute;s-gradua&ccedil;&atilde;o</label>
                 </div>
                 <div class="flex items-center gap-2">
                     <input type="checkbox" class="border p-1 cursor-pointer hover:bg-gray-300 rounded-lg border-gray-300 bg-gray-200"
@@ -57,7 +57,7 @@
             </div>
         </div>
         <br>
-        <button type="submit" class="mt-4 p-2 bg-blue-500 w-full cursor-pointer hover:bg-blue-600 text-white">Upload</button>
+        <button type="submit" class="mt-4 p-2 bg-blue-500 w-full cursor-pointer hover:bg-blue-600 text-white">Carregar</button>
     </form>
 </div>
 @endsection

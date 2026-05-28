@@ -5,9 +5,9 @@
     @include('messageError')
     <form action="{{ route('president-list') }}" method="POST">
         @csrf
-        <h1 class="bold text-2xl">Emails presidenciais</h1>
+        <h1 class="font-bold text-2xl">E-mails presidenciais</h1>
 
-        <input type="email" placeholder="Email presidencial" class="mt-4 border-s border-grey-100 p-2 bg-gray-100 w-full"
+        <input type="email" placeholder="E-mail presidencial" class="mt-4 border-s border-gray-300 p-2 bg-gray-100 w-full"
             name="new_president_email" required>
         <br>
         <button type="submit" class="mt-4 p-2 bg-blue-500 w-full cursor-pointer hover:bg-blue-600 text-white">Adicionar</button>

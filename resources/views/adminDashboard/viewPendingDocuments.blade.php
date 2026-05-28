@@ -3,7 +3,7 @@
 @section('content')
 <div class="flex-grow h-screen p-4 bg-white rounded shadow-md overflow-y-scroll">
     @include('messageError')
-    <h1 class="bold text-2xl">Protocolos Pendentes</h1>
+    <h1 class="font-bold text-2xl">Protocolos Pendentes</h1>
 
     <ul class="mt-4">
         @if(count($documents) > 0)

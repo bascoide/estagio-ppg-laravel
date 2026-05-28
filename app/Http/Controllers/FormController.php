@@ -32,7 +32,7 @@ class FormController extends Controller
             ->first();
 
         if (!$userCourse) {
-            return redirect('/guia-form')->with('error', 'Curso do utilizador nÃ£o encontrado.');
+            return redirect('/guia-form')->with('error', 'Curso do utilizador não encontrado.');
         }
 
         $typeCourseId = $userCourse->type_course_id;
@@ -49,17 +49,18 @@ class FormController extends Controller
         $fieldValues = [];
 
         if ($filledPlanId > 0) {
-        $finalDocument = FinalDocument::where('id', $filledPlanId)
-            ->where('user_id', $userId)
-            ->first();
+            $finalDocument = $this->findUsableFilledPlan($filledPlanId, (int) $userId);
 
-            if ($finalDocument) {
-                $fieldValues = FieldValue::where('final_document_id', $filledPlanId)
-                    ->get()
-                    ->keyBy('field_id')
-                    ->toArray();
+            if (!$finalDocument) {
+                return redirect()->route('user-submissions')
+                    ->with('error', 'Este plano já não está disponível. Comece um novo plano.');
             }
-    }
+
+            $fieldValues = FieldValue::where('final_document_id', $filledPlanId)
+                ->get()
+                ->keyBy('field_id')
+                ->toArray();
+        }
 
         return view('form', compact('documents', 'finalDocument', 'fieldValues', 'filledPlanId'));
     }
@@ -75,7 +76,7 @@ class FormController extends Controller
             ->first();
 
         if (!$userCourse) {
-            return redirect('/form')->with('error', 'Curso do utilizador nÃ£o encontrado.');
+            return redirect('/form')->with('error', 'Curso do utilizador não encontrado.');
         }
 
         $typeCourseId = $userCourse->type_course_id;
@@ -96,6 +97,18 @@ class FormController extends Controller
             ->get()
             ->toArray();
 
+        $filledPlanId = (int) $request->query('filled_plan_id', 0);
+        $filledPlan = null;
+
+        if ($filledPlanId > 0) {
+            $filledPlan = $this->findUsableFilledPlan($filledPlanId, (int) $userId);
+
+            if (!$filledPlan) {
+                return redirect()->route('user-submissions')
+                    ->with('error', 'Este plano já não está disponível. Comece um novo plano.');
+            }
+        }
+
         $documentId = $request->query('document') ? (int) $request->query('document') : null; 
 
         if (!$documentId || $documentId <= 0) {
@@ -103,7 +116,21 @@ class FormController extends Controller
         }
 
         if (!$this->isDocumentAvailableForTypeCourse($documentId, $typeCourseId)) {
-            return redirect('/form')->with('error', 'Documento invalido ou indisponivel para o seu curso.');
+            return redirect('/form')->with('error', 'Documento inválido ou indisponível para o seu curso.');
+        }
+
+        $selectedDocument = Document::find($documentId);
+        if (!$selectedDocument) {
+            return redirect('/form')->with('error', 'Documento não encontrado.');
+        }
+
+        if ($filledPlan && $selectedDocument->type !== 'Protocolo') {
+            return redirect()->route('form', ['filled_plan_id' => $filledPlanId])
+                ->with('error', 'Selecione um protocolo para continuar a partir do plano.');
+        }
+
+        if (!$filledPlan && $selectedDocument->type !== 'Plano') {
+            return redirect('/form')->with('error', 'Comece por selecionar um plano.');
         }
 
         $fields = Field::where('document_id', $documentId)->get()->toArray();
@@ -130,16 +157,21 @@ class FormController extends Controller
                 ->first();
 
             if (!$userCourse) {
-                throw new Exception('Curso do utilizador nao encontrado.');
+                throw new Exception('Curso do utilizador não encontrado.');
             }
 
             if (!$this->isDocumentAvailableForTypeCourse($documentId, (int) $userCourse->type_course_id)) {
-                throw new Exception('Documento invalido ou indisponivel para o seu curso.');
+                throw new Exception('Documento inválido ou indisponível para o seu curso.');
             }
 
             $document = Document::find($documentId);
             if (!$document) {
-                throw new Exception('Documento nao encontrado.');
+                throw new Exception('Documento não encontrado.');
+            }
+
+            $filledPlanId = (int) $request->input('filled_plan_id', 0);
+            if ($document->type !== 'Plano' && !$this->findUsableFilledPlan($filledPlanId, $userId)) {
+                throw new Exception('O plano associado já não está disponível. Comece um novo plano.');
             }
 
             $submittedData = [
@@ -297,7 +329,7 @@ class FormController extends Controller
         }
 
         if (count($formData['field_ids']) !== count($formData['field_values'])) {
-            throw new Exception('Dados do formulario invalidos.');
+            throw new Exception('Dados do formulário inválidos.');
         }
 
         $fieldData = array_combine($formData['field_ids'], $formData['field_values']);
@@ -311,7 +343,7 @@ class FormController extends Controller
         $records = [];
         foreach ($fieldData as $fieldId => $value) {
             if (!in_array((int) $fieldId, $validFieldIds, true)) {
-                throw new Exception('Campo invalido para o documento selecionado.');
+                throw new Exception('Campo inválido para o documento selecionado.');
             }
 
             $records[] = [
@@ -333,6 +365,20 @@ class FormController extends Controller
             ->where('document.is_active', true)
             ->where('document_type_course.type_course_id', $typeCourseId)
             ->exists();
+    }
+
+    private function findUsableFilledPlan(int $filledPlanId, int $userId): ?FinalDocument
+    {
+        if ($filledPlanId <= 0) {
+            return null;
+        }
+
+        return FinalDocument::with('document')
+            ->where('id', $filledPlanId)
+            ->where('user_id', $userId)
+            ->whereNotIn('status', ['Cancelado', 'Inativo'])
+            ->whereHas('document', fn ($query) => $query->where('type', 'Plano'))
+            ->first();
     }
 
     private function generateFinalDocx(int $documentId, array $submittedValues): string

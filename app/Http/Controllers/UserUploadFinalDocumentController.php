@@ -20,7 +20,7 @@ class UserUploadFinalDocumentController extends Controller
         if (!$finalDocument || !$this->canReceiveSignedDocument($finalDocument)) {
             return view('userUploadFinalDocument', [
                 'finalDocumentId' => null,
-            ])->with('error', 'Este documento nao esta disponivel para submissao final.');
+            ])->with('error', 'Este documento não está disponível para submissão final.');
         }
 
         return view('userUploadFinalDocument', [
@@ -38,7 +38,7 @@ class UserUploadFinalDocumentController extends Controller
             ]);
         } catch (ValidationException $e) {
             return redirect('/user-upload-final-document-form?final_document_id=' . $finalDocumentId)
-                ->with('error', 'Apenas arquivos PDF válidos são permitidos.');
+                ->with('error', 'Apenas ficheiros PDF válidos são permitidos.');
         }
 
         $file = $request->file('document');
@@ -50,23 +50,23 @@ class UserUploadFinalDocumentController extends Controller
 
         if (!$this->canReceiveSignedDocument($oldFinalDocument)) {
             return redirect('/user-upload-final-document-form?final_document_id=' . $finalDocumentId)
-                ->with('error', 'Este documento nao esta disponivel para submissao final.');
+                ->with('error', 'Este documento não está disponível para submissão final.');
         }
 
-        // Autenticar utilizador com email+password
+        // Autenticar utilizador com e-mail e palavra-passe.
         $email    = strtolower(trim((string) $request->input('email', '')));
         $password = $request->input('password', '');
 
         if (empty($email) || empty($password)) {
             return redirect('/user-upload-final-document-form?final_document_id=' . $finalDocumentId)
-                ->with('error', 'Email e senha são obrigatórios!');
+                ->with('error', 'E-mail e palavra-passe são obrigatórios!');
         }
 
         $user = User::where('email', $email)->first();
 
         if (!$user || !$user->verified || !Hash::check($password, $user->password)) {
             return redirect('/user-upload-final-document-form?final_document_id=' . $finalDocumentId)
-                ->with('error', 'Email ou senha inválidos!');
+                ->with('error', 'E-mail ou palavra-passe inválidos!');
         }
 
         if ($user->id !== $oldFinalDocument->user_id) {
@@ -104,7 +104,7 @@ class UserUploadFinalDocumentController extends Controller
             })->toArray());
         }
 
-        return redirect('/user-upload-final-document-form')->with('message', 'Upload realizado com sucesso!');
+        return redirect('/user-upload-final-document-form')->with('message', 'Carregamento efetuado com sucesso!');
     }
 
     private function canReceiveSignedDocument(FinalDocument $finalDocument): bool

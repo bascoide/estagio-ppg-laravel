@@ -26,13 +26,13 @@ class DocumentValidationController extends Controller
 
         if (!preg_match('/^[0-9a-fA-F-]{36}$/', $uuid)) {
             return view('adminDashboard.presidentUploadFinalDocument', ['uuid' => null])
-                ->with('error', 'Documento nao encontrado.');
+                ->with('error', 'Documento não encontrado.');
         }
 
         $presidentDocument = PresidentValidatedDocument::where('uuid', $uuid)->first();
         if (!$presidentDocument) {
             return view('adminDashboard.presidentUploadFinalDocument', ['uuid' => null])
-                ->with('error', 'Documento nao encontrado.');
+                ->with('error', 'Documento não encontrado.');
         }
 
         if ($presidentDocument->is_validated) {
@@ -46,13 +46,13 @@ class DocumentValidationController extends Controller
         if ($uuid !== '') {
             $isValidated = PresidentValidatedDocument::where('uuid', $uuid)->value('is_validated');
             if ($isValidated) {
-                return redirect('/president-upload-final-document-form')->with('error', 'O documento jÃ¡ foi validado.');
+                return redirect('/president-upload-final-document-form')->with('error', 'O documento já foi validado.');
             }
         }
 
         if (!PresidentValidatedDocument::where('uuid', $uuid)->exists()) {
             return view('adminDashboard.presidentUploadFinalDocument', ['uuid' => null])
-                ->with('error', 'Documento nao encontrado.');
+                ->with('error', 'Documento não encontrado.');
         }
 
         return view('adminDashboard.presidentUploadFinalDocument', compact('uuid'));
@@ -66,12 +66,12 @@ class DocumentValidationController extends Controller
             $adminName         = session('admin_name', 'Admin');
 
             if (!filter_var($presidencialEmail, FILTER_VALIDATE_EMAIL)) {
-                throw new Exception('Email presidencial invalido.');
+                throw new Exception('E-mail presidencial inválido.');
             }
 
             $finalDocument = FinalDocument::find($finalDocumentId);
             if (!$finalDocument) {
-                throw new Exception('Documento nÃ£o encontrado.');
+                throw new Exception('Documento não encontrado.');
             }
 
             DB::beginTransaction();
@@ -91,7 +91,7 @@ class DocumentValidationController extends Controller
             $finalDocument->update(['status' => 'Inativo']);
 
             if (!(new EmailService())->sendPresidentialValidationEmail($presidencialEmail, $finalDocumentId, $adminName, $presidentDocument->uuid)) {
-                throw new Exception('Falha ao enviar email para validaÃ§Ã£o presidencial.');
+                throw new Exception('Falha ao enviar e-mail para validação presidencial.');
             }
 
             DB::commit();
@@ -113,22 +113,22 @@ class DocumentValidationController extends Controller
 
         try {
             if (!$request->hasFile('document') || $request->file('document')->getError() !== UPLOAD_ERR_OK) {
-                throw new Exception('Erro no upload do arquivo');
+                throw new Exception('Erro no carregamento do ficheiro');
             }
 
             $uuid = trim((string) $request->input('verified_uuid'));
             if (!preg_match('/^[0-9a-fA-F-]{36}$/', $uuid)) {
-                throw new Exception('UUID invalido');
+                throw new Exception('UUID inválido');
             }
 
             $pvd  = PresidentValidatedDocument::with('finalDocument.user')->where('uuid', $uuid)->first();
 
             if (!$pvd) {
-                throw new Exception('UUID invÃ¡lido');
+                throw new Exception('UUID inválido');
             }
 
             if ($pvd->is_validated) {
-                throw new Exception('O documento jÃ¡ foi validado.');
+                throw new Exception('O documento já foi validado.');
             }
 
             if ($this->presidentLinkExpired($pvd)) {
@@ -156,7 +156,7 @@ class DocumentValidationController extends Controller
                 ->first();
 
             if (!$pvd || $pvd->is_validated || $this->presidentLinkExpired($pvd)) {
-                throw new Exception('Este documento ja nao esta disponivel para validacao.');
+                throw new Exception('Este documento já não está disponível para validação.');
             }
 
             $userEmail       = $pvd->finalDocument->user->email;
@@ -187,13 +187,13 @@ class DocumentValidationController extends Controller
             }
 
             if (!(new EmailService())->sendAcceptedValidationEmail($userEmail, $validatedDocument->id)) {
-                throw new Exception('Falha ao enviar email de validaÃ§Ã£o.');
+                throw new Exception('Falha ao enviar e-mail de validação.');
             }
 
             $pvd->update(['is_validated' => true]);
             DB::commit();
 
-            return redirect('/president-upload-final-document-form')->with('message', 'Documento finalizado com sucesso!');
+            return redirect('/president-upload-final-document-form')->with('message', 'Documento concluído com sucesso!');
         } catch (Exception $e) {
             if (DB::transactionLevel() > 0) {
                 DB::rollBack();
@@ -215,7 +215,7 @@ class DocumentValidationController extends Controller
 
             $finalDocument = FinalDocument::with('user')->find($finalDocumentId);
             if (!$finalDocument) {
-                throw new Exception('Documento nÃ£o encontrado.');
+                throw new Exception('Documento não encontrado.');
             }
 
             $email = $finalDocument->user->email ?? '';
@@ -224,7 +224,7 @@ class DocumentValidationController extends Controller
             $finalDocument->update(['status' => 'Invalidado']);
 
             if (!(new EmailService())->sendRejectedValidationEmail($email, $finalDocumentId, $reason)) {
-                throw new Exception('Falha ao enviar email de invalidaÃ§Ã£o.');
+                throw new Exception('Falha ao enviar e-mail de invalidação.');
             }
 
             DB::commit();
@@ -246,13 +246,13 @@ class DocumentValidationController extends Controller
             try {
                 $email = strtolower(trim((string) $request->input('new_president_email')));
                 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                    throw new Exception('Email invalido.');
+                    throw new Exception('E-mail inválido.');
                 }
 
                 PresidentEmail::firstOrCreate(['email' => $email]);
                 $presidentEmails = PresidentEmail::all()->toArray();
                 return view('adminDashboard.listPresidentEmails', compact('presidentEmails'))
-                    ->with('message', 'Email presidencial adicionado com sucesso!');
+                    ->with('message', 'E-mail presidencial adicionado com sucesso!');
             } catch (Exception $e) {
                 return view('adminDashboard.listPresidentEmails', ['presidentEmails' => PresidentEmail::all()->toArray()])
                     ->with('error', 'Erro! ' . $e->getMessage());
@@ -267,7 +267,7 @@ class DocumentValidationController extends Controller
     {
         try {
             PresidentEmail::destroy((int) $request->input('email_id'));
-            return back()->with('message', 'Email presidencial removido com sucesso!');
+            return back()->with('message', 'E-mail presidencial removido com sucesso!');
         } catch (Exception $e) {
             return back()->with('error', 'Erro! ' . $e->getMessage());
         }

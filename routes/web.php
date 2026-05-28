@@ -29,6 +29,7 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::middleware(['auth.custom', 'no.cache', 'throttle:authenticated'])->group(function () {
     Route::get('/guia-form',   [FormController::class, 'index'])->name('guia-form');
     Route::get('/minhas-submissoes', [UserSubmissionsController::class, 'index'])->name('user-submissions');
+    Route::delete('/minhas-submissoes/{submission}', [UserSubmissionsController::class, 'destroy'])->name('user-submissions.destroy');
     Route::get('/form',        [FormController::class, 'form'])->name('form');
     Route::get('/get-form',    [FormController::class, 'generateForm'])->name('get-form');
     Route::post('/submit-form', [FormController::class, 'submitForm'])->middleware('throttle:uploads')->name('submit-form');
