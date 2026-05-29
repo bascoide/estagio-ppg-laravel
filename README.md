@@ -25,3 +25,9 @@ The application supports students through document selection, dynamic form compl
 ## Purpose
 
 This system is intended to centralize internship protocol submission and approval, simplify academic administrative work, and preserve document history and validation tracking.
+
+## Contacts
+
+vascoide.vale@gmail.com
+andre.quintela.coelho@gmail.com
+
